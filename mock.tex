@@ -1,0 +1,42 @@
+\documentclass[a4paper]{ctexbook}
+
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\definecolor{codebg}{rgb}{0.949, 0.949, 0.922} 
+\lstset{ 
+	backgroundcolor=\color{codebg},
+}
+\usepackage[colorinlistoftodos]{todonotes}
+
+% 定义所有的图片文件在 figures 子目录下
+\graphicspath{{figures/}}
+
+\begin{document}
+
+\title{Web API场景建模及 \\测试自动生成的研究与实现}
+\author{李林翼}
+\date{2018年6月10日}
+\maketitle
+
+\tableofcontents
+
+\include{data/chap1_intro}
+\include{data/chap2_method}
+\include{data/chap3_sysimpl}
+\include{data/chap4_experiment}
+\include{data/chap5_summary}
+
+
+%% 参考文献
+% 注意：至少需要引用一篇参考文献，否则下面两行可能引起编译错误。
+% 如果不需要参考文献，请将下面两行删除或注释掉。
+% 数字式引用
+\bibliographystyle{thuthesis-numeric}
+% 作者-年份式引用
+% \bibliographystyle{thuthesis-author-year}
+\bibliography{ref/refs,ref/appendix1bib}
+
+\end{document}

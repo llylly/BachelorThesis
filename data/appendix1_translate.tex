@@ -1,0 +1,656 @@
+\chapter{书面翻译}
+
+\title{RESTful API自动化测试用例生成}
+
+\author{Andrea Arcuri\\挪威, 奥斯陆, Westerdals Oslo ACT\\与\ 卢森堡, 卢森堡大学, SnT\\ arcand@westerdals.no}
+
+\begin{cabstract}
+当今, web服务在企业级应用的开发中扮演着重要角色. 很多此类应用均采用面向服务的架构(SOA)开发, 微服务是其中最流行的种类之一. 一个RESTful的web服务使用网络上的HTTP协议, 以API的形式提供数据, 也可能与数据库和其他web服务进行交互. RESTful API的输入与输出是对远程服务器的HTTP请求和响应, 因此, RESTful API的测试面临着挑战. 由于被测API是远程服务, 它的代码不可获得, 因此许多相关文献均采用黑盒测试的方法. 在本论文中, 我们站在开发者的角度思考测试 - 所有代码均是可获得的. 因而, 我们提出了一种全自动的白盒测试方法, 其中, 测试用例使用一种进化算法自动生成. 测试用例根据代码覆盖率和故障检测的相关指标给予奖励. 我们在名叫“EvoMaster”的开源工具中实现了这一方法. 在两个开源且有价值的RESTful服务和一个工业界的RESTful服务上的实验结果说明, 我们的新方法可以自动发现这些应用中的38个真实故障. 然而, 代码覆盖率仍比这些服务中已存在的手写测试套件要低. 进而, 我们对如何进一步改进这类方法的可能研究方向进行了讨论.
+\end{cabstract}
+
+\ckeywords{REST, SBSE, SBST, SOA, 微服务, Web服务, 测试生成}
+
+
+\section{引言}
+在企业体系中, 面向服务的架构(SOA), 特别是微服务架构\cite{newman2015building}, 已成为常规实践. SOA服务的市场规模在2013年已经达到了57亿美元, 这个市场的巨头有IBM, 微软, 甲骨文和SAP等公司. 预计至2020年\footnote{http://www.radiantinsights.com/research/services-oriented-architecture-soa}, 市场规模将达160亿美元. 目前, REST\cite{fielding2000architectural}是在企业体系中开发web服务的最常用方式. 
+
+不仅在许多企业体系内部, 在互联网上,也有许多RESTful web服务. 如ProgrammableWeb\footnote{https://www.programmableweb.com/api-research}, 在互联网平台上, 目前已有超过16,000项Web API. 在Java生态系统中, 根据对1,700名工程师的调查\footnote{http://www.infoworld.com/article/3153148/java/oracle-survey-java-ee-
+users-want-rest-http2.html}, 对REST的更好支持(与HTTP/2支持一同)是在下一代Java企业版(当时为JEE8)中最期待的特性. 根据那项调查, 这是因为“当前Java中的云开发实践在很大程度上基于REST和异步”. 
+
+测试web服务, 尤其是RESTful的web服务, 有许多挑战\cite{canfora2006service}\cite{bozkurt2013testing}. 特别针对服务组合的复杂性, 和黑盒测试外部服务, 业已提出了各种技术. 当前的许多工作着重于处理SOAP的web服务. SOAP是一种基于XML的有完善定义的协议. 然而, 许多企业现已切换到REST服务, REST服务通常使用JSON(JavaScript对象表示法)作为消息本体的数据格式. 此外, 对于web服务的白盒测试, 由于需获得这些服务的源代码, 因此相关研究工作还较少. 
+
+在本论文中, 我们提出了一种可以自动化生成RESTful web服务的集成测试的新方法. 我们的方法有两个主要目标: 最大化代码覆盖率(如语句覆盖率), 和使用HTTP返回状态码作为自动化测试参照物来检测故障. 我们的目标是在独立环境中测试RESTful服务, 这是工程师在开发服务时直接进行的一种典型测试类型. 为了生成测试, 我们使用了一种进化算法, 具体来说, 是使用整测试套件方法的遗传算法\cite{fraser2013whole}. 
+
+我们实现了一个名叫EvoMaster的工具原型, 并在三个不同的RESTful web服务上进行了实验. 其中两个服务是开源的, 第三个则由我们的一个工业界伙伴提供. 这些系统的代码行数从两千到一万行不等. 实验结果显示, 新方法可以在这些系统上发现38个真正的故障. 但是, 与已有的手写测试用例相比, 代码覆盖率还相对较低. 这主要是因为字符串约束和与数据库, 外部web服务的交互的存在. 要解决这些问题并进一步改进表现, 则还需要进一步的研究.
+
+特别地, 这篇论文提供了以下的研究与工程贡献: 
+
+\begin{itemize}
+\item 针对RESTful的web服务, 我们设计了一个可生成有效测试用例的新技术.
+\item 我们提出了一种自动化分析, 导出和利用web服务的白盒信息, 来改进测试数据生成的方法.
+\item 我们展示了其在真实软件上的实证研究, 研究表明, 尽管工具还在早期的原型阶段, 它已经能自动发现这些RESTful web服务中的38项真正的故障.
+\item 为了使我们的结果, 工具对比, 和算法实现具有可重复性, 我们遵守开源LGPL协议发布了工具原型, 并发布于公共托管仓库GitHub\footnote{https://github.com/arcuri82/EvoMaster}上.
+\end{itemize}
+  
+\section{背景}
+  \subsection{HTTP}
+      超文本传输协议(HTTP)是网络通信的一种应用协议, 也是万维网(World Wide Web)上通信的主要协议. HTTP协议由一系列征求意见稿(RFC)文档定义, 这些征求意见稿由互联网工程任务组(IETF)和万维网联盟(W3C)维护, 比如RFC7230\footnote{https://tools.ietf.org/html/rfc7230}和RFC7231\footnote{https://tools.ietf.org/html/rfc7231}. 
+        
+        一个HTTP消息通常在TCP之上传输, 由四个主要部分组成: 
+        \begin{itemize}
+          \item \textit{原语/方法}: 要进行的操作类型, 如获取某特定网页. 
+          
+            \item \textit{资源路径}: 指定HTTP操作所应用的资源的标识符, 如要获取的HTML文档的路径. 
+            
+            \item \textit{头}: 额外的元信息, 由一个键值对的列表表示. 如, “accept”头是一种元信息, 它用来指定资源返回时的格式(如HTML, XML或JSON)(资源可以有多种可用的格式). 
+            
+            \item \textit{体}: 消息的载荷, 如作为“get”请求的响应而返回的HTML文本. 
+        \end{itemize}
+        
+        HTTP协议在公开的资源上允许以下操作(即原语/方法): 
+        \begin{itemize}
+          \item \textit{GET}: 指定的资源应该在响应体中返回. 
+            \item \textit{HEAD}: 类似GET, 不过被请求资源的响应体不应该被返回. 当用户只需要检查资源是否存在时, 或者用户只需要获取响应头时, 这一操作很有用. 
+            \item \textit{POST}: 向服务器发送数据, 如web表格的文本值. 通常, 当需要指定新资源在服务器上创建时, 会使用这一方法. 
+            \item \textit{DELETE}: 删除指定资源. 
+            \item \textit{PUT}: 将指定资源用新资源替代, 新资源在请求体中指定. 
+            \item \textit{PATCH}: 对指定资源做局部更新. 与PUT方法相比, PUT方法则是将已有资源用新资源完全替换. 
+            \item \textit{TRACE}: 回传收到的请求. 当我们想确定HTTP请求是否有被客户和服务器之间的中间者(如代理)篡改时, 这个方法很有用. 
+            \item \textit{OPTIONS}: 列出给定资源的所有可用HTTP方法. 举个例子, 某个HTML文件可以使用GET方法, 但是不能使用DELETE方法. 
+            \item \textit{CONNECT}: 通过HTTP代理建立隧道连接, 通常在加密通信中使用. 
+        \end{itemize}
+        
+        当客户发送一个HTTP请求后, 服务器会送回一个有头和可选的请求体载荷的HTTP响应. 此外, 响应还会包含一个三位数字的状态码. 状态码有五个组/系列, 组别靠第一位数字区分: 
+        \begin{itemize}
+          \item \textit{1xx}: 用于临时响应, 如确认协议切换(101), 或对于某个之前的只获取响应头的条件请求, 应继续发送响应体(100). 
+            \item \textit{2xx}: 响应被成功处理时返回(200). 具体地, 作为POST命令的结果, 服务器还可以进一步表明一个资源被创建了(201); 或作为DELETE命令的结果, 表明不需期望有响应体(204).
+            \item \textit{3xx}: 此组状态码被用于重定向, 如告诉用户被请求的资源现在在其他位置可用. 重定向可以是临时的(307)或永久的(301). 
+            \item \textit{4xx}: 用于指定用户请求无效(400). 一种典型情景是被请求资源不存在(404), 或试图在未被认证的情况下(401)或未被授权的情况下(403)获取被保护的资源. 
+            \item \textit{5xx}: 当服务器不能提供有效响应时返回(500). 一种典型情景是业务逻辑代码有故障且在请求处理时抛出异常, 然后异常被应用服务器捕获(故当异常被抛出时, 整个服务器不会崩溃). 然而, 在用到的外部服务(如数据库)没有正确响应时也会返回这类响应吗. 比如当数据库的硬盘损坏时, 尽管服务器不能再使用数据库, 它仍可以返回500作为HTTP响应.
+        \end{itemize}
+    
+      HTTP协议是\textit{无状态}的: 因为HTTP协议不存储任何之前的信息, 每个进入的请求都需要提供处理所需的所有信息. 为了在用户进行的一些相关HTTP请求间维护状态(如购物车), 需要使用\textit{cookies}: \textit{cookies}是服务器创建的用来识别指定用户的有唯一id的HTTP头, 用户需要在他的所有HTTP请求中包含这个HTTP头.
+    
+    \subsection{REST}
+      多年以来, 编写web服务的主要方式是使用SOAP(简单对象访问协议), 这是一个使用XML包装信息的通信协议. 然而, 近年来, 在开发web服务时, 工业界有明显的向REST(表现层状态转移)过渡的趋势. 许多巨头已在使用REST, 如Google\footnote{https://developers.google.com/drive/v2/reference/}, Amazon\footnote{ http://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html}, Twitter\footnote{https://dev.twitter.com/rest/public}, Reddit\footnote{https://www.reddit.com/dev/api/}, LinkedIn\footnote{https://developer.linkedin.com/docs/rest-api}等等. 
+
+    REST的概念首先由一篇有很大影响力(目前引用量近6000)的2000年的博士论文\cite{fielding2000architectural}引入. REST不是一个协议(如SOAP那样), 而是一系列在HTTP上设计web服务的架构上的指南. 这种客户端 - 服务器应用需要满足一些约束, 才能被认为是RESTful的, 比如无状态; 资源需被明确指明是否可缓存; 资源需能用URI指定; 由客户端发送的资源表示(JSON或XML)需与资源的实际格式(如关系型数据库的一行)保持独立; 资源需通过合适的HTTP方法管理与组织, 比如某个资源应该由DELETE请求来删除而不是POST请求; 等等.
+        
+        让我们考虑一个RESTful web服务的例子, 它让我们操作一个产品名录. 这些是可能的操作: 
+        \begin{itemize}
+          \item \textit{GET /products} (返回所有可用产品)
+            \item \textit{GET /products?k=v} (返回由自定义参数过滤的可用产品)
+            \item \textit{POST /products} (创建一个新产品)
+            \item \textit{GET /products/\{id\}} (返回指定id的产品)
+            \item \textit{GET /products/\{id\}/price} (返回指定id产品的价格)
+            \item \textit{DELETE /products/\{id\}} (删除指定id的产品)
+        \end{itemize}
+      注意这些URI并没有指定返回的表示格式. 一个服务器可以用不同的格式提供相同的资源, 如XML或JSON, 并且这个格式应该在请求头中指定. 
+        
+        REST的另一个特性是所谓的HATEOAS(超媒体即是应用状态引擎), 即每个资源表示也应该提供往其它资源的链接(与网页的链接类似). 举个例子, 当请求\textit{GET /products}时, 不仅仅是所有产品列表应被返回, 还应有到其它可用请求方法的链接. 理想情形下, 给出API的一个主入口, 整个这个API应该能通过这些链接完全发掘到. 然而, HATEOS在实践中很少使用\cite{rodriguez2016rest}, 这主要是因为缺乏定义链接格式的合适规范(如JSON或XML模式), 并且这会给客户端带来额外的负担. 
+        
+        注意: REST不是协议, 而只是架构指南的集合\cite{fielding2000architectural}, 名词”REST“十分常见, 但在实践中常被误用. 虽然许多HTTP上的Web API严格上讲并不能被认为是完全REST的\cite{rodriguez2016rest}\cite{fielding2000architectural}, 但它们使用REST的冠名与宣传. 虽然在本论文中我们使用术语REST, 但提出的新技术可以用于任何通过HTTP端点访问, 并且载荷数据用类似JSON或XML的语言描述的web API. 
+    
+    \subsection{基于搜索的软件测试}
+    由于软件可以十分复杂, 测试数据生成是一项复杂的任务. 而且, 很多开发者都感觉编写测试用例枯燥乏味. 因此, 有许多相关研究旨在实现自动化生成高质量测试用例. 其中一个最简单的方法是随机生成测试用例\cite{arcuri2012random}. 虽然在一些场景中随机可能是很有效的, 但这可能仅仅只能覆盖被测软件的一小部分. 比如, 由于一个随机生成的字符串几乎不可能构成一个有效且符合格式的HTTP消息, 在RESTful API上使用裸随机测试策略是没有多少意义的. 
+        
+        在多年来提出的许多不同测试技术中, 基于搜索的软件工程在解决许多软件工程问题中都格外有效\cite{harman2012search}, 尤其是在软件测试中\cite{ali2010systematic}, 如单元测试生成的高级工具EvoSuite\footnote{ https://github.com/EvoSuite/evosuite}\cite{fraser2011evosuite}\cite{fraser2014large}. 软件测试可以被建模为一个优化问题, 目标是最大化生成的测试套件的代码覆盖率和故障检测率. 进而, 只要对于给定的测试问题定义了适应度函数, 便可使用搜索算法来探索可能解的空间(在此上下文中为测试用例). 
+        
+        有许多种类的搜索算法, 其中遗传算法(GA)可能是最为著名的. 在遗传算法中, 使用个体的集合来进行多代进化. 根据适应度值, 首先选择一些个体繁衍, 然后, 在采样新后代时, 使用杂交(混合来自父母双方的基因)和突变(小尺度变化). 当最优个体出现时, 或者搜索过程用尽了分配的时间时, 进化结束.
+
+\section{相关工作}
+  Candora和Di Penta讨论了SOA(面向服务架构)测试的趋势和挑战\cite{canfora2006testing}. 之后, 他们发表了一篇更详细的综述\cite{canfora2006service}. SOA的测试有许多不同的类型(单元测试, 集成测试, 回归测试, 鲁棒性测试等等), 参与者的角色也很多样, 有服务开发方, 服务提供方, 服务集成方, 第三方验证方等等. Bertolino等人\cite{bertolino2012trends}也讨论了SOA验证的趋势和挑战. 
+    
+    在这之后, Bozkurt等人\cite{bozkurt2013testing}也发表了关于SOA测试的综述, 在其中分析了177篇论文. 这篇综述的一项有趣结果是, 虽然近几年来关于SOA测试的论文数量一直在增加, 但只有11\%的论文提供了在实际系统上的实证实验. 71\%的论文完全没有提供任何实验结果, 甚至是试验系统上的实验也没有提供. 
+    
+    在这一领域内的许多工作集中在使用WSDL(Web服务描述语言)描述的SOAP web服务的黑盒测试上. 正如\cite{xu2005testing}\cite{bai2005wsdl}\cite{martin2006automated}\cite{ma2008wsdl}\cite{bartolini2009ws}\cite{li2016generating}, 人们提出了许多不同的策略. 如果这些服务也提供了语义模型(如使用OWL-S格式), 那么我们可以利用它来生成更“实际”的测试数据\cite{bozkurt2011automatically}. 当在SOA中的服务组件采用BPEL(Web服务业务流程执行语言)来描述时, 我们可以使用许多不同的技术来为这些组件生成测试\cite{wotawa2013fifty}\cite{jehan2014soa}. 
+    
+    黑盒测试有它的优势, 但也有它的限制. 使用覆盖率指标可以提高测试生成的质量, 但是, web服务常常位于远程, 因而无法获取到源代码. 对于测试, Bartolini等人\cite{bartolini2011bringing}提出了一种将代码覆盖率反馈作为服务提供的方法, 该反馈不会暴露被测web服务的内部细节. 然而, 代码覆盖率探针的插桩必须手动完成. Ye和Jacobsen\cite{ye2013whitening}也提出了一种相似的方法. 在本论文中, 我们提出的方法也将代码覆盖率作为服务提供, 但却是全自动的(基于即时字节码操作). 
+    
+    对于RESTful web服务, Chakrabarti和Kumar\cite{chakrabarti2009test}提供了一套测试框架, 该框架“根据穷举所有请求参数值的有效组合来自动生成测试用例”.  Seijas等人\cite{lamela2013towards}提出了一种以理想化的, 基于属性的测试模型为基础, 进行RESTful API测试生成的技术. Chakrabarti和Rodriquez\cite{chakrabarti2010connectedness}定义了一种形式化RESTful web服务的“连通性”, 并根据此模型生成测试的技术. 有形式化模型时, 一些技术就也可以使用了, 比如\cite{pinheiro2013model}和\cite{fertig2015model}中的技术. 我们的技术与以上技术都有着显著不同, 这体现在我们的技术不需要任何形式化模型的存在, 并且可以自动利用白盒信息, 且使用进化算法来指导生成有效测试.
+    
+    关于进化算法在web服务测试中的应用, Di Penta等人\cite{di2007search}为测试服务水平协议(SLA)提出了一种方法. 给定一个有着形式化协议的API, 比如“服务提供方保证服务购买者获得少于30 ms的响应时间与不低于300 dpi的解析度”, 便可以使用进化算法来生成不满足协议的测试用例. 适应度函数可以基于测试用例与违反被测协议之间的距离, 此函数的值可以在执行后求得. 
+
+\section{方法}
+
+  在这篇论文中, 我们提出了一种对RESTful API的web服务自动化生成测试用例的新方法. 我们考虑在孤立环境中测试RESTful服务, 而不是作为两个或更多一起运行的服务的一部分(如在微服务架构中)来测试. 对应的应用场景是: 这些RESTful服务的开发者可以直接使用我们的方法来自动生成测试用例. 因此, 我们假设这些服务的源代码是可获得的. 目标则是生成有高代码覆盖率, 并且能检测出当前服务实现中的故障的测试用例. 因此, 我们需要定义什么是测试用例, 什么可以被用来作为自动化测试的参照(需要检测故障行为), 以及搜索算法如何被用来生成这类测试. 
+    
+    \subsection{测试用例}
+    在我们的语义中, 一个测试用例是对一个RESTful服务的一个或多个HTTP请求. 因此, 测试数据可被视为一个代表HTTP请求的字符串. 然而, 除了给定的HTTP请求结构(如头和资源路径里的参数), 测试数据还可以复杂得多. 比如请求体部分的内容就可以是任何格式. 因为目前JSON是RESTful API通信的主要格式, 在这篇论文中我们只关注这一格式. 若要使之处理其他使用频率较小的格式, 比如XML, 则只需要一些工程上的实现即可. 
+    
+    在能够发送HTTP请求之前, 首先我们需要知道哪些API方法是可用的. 相比于有完善定义的SOAP协议, REST并没有一个用来定义可用API的标准. 但是, 有一个非常流行的REST文档化工具叫Swagger\footnote{http://swagger.io}, 它目前支持多于25种不同的程序语言. 另一个不太知名的工具叫RAML\footnote{http://raml.org}. 当一个RESTful API用Swagger配置后, 它将自动提供一个JSON文件作为资源, 这个文件完全定义了在此RESTful服务里, 存在着哪些API. 因此, 在测试这个RESTful服务之前, 第一步就是提取出Swagger的JSON定义. 
+    
+    图\ref{fig1}展示了我们将在实证研究中使用的一个系统的Swagger定义的片段. 这个JSON文件总计超过2000行代码. 如图所示, 对同一个资源, 有两个HTTP操作的定义(GET和PUT). 为了在这个资源上执行GET操作, 需要两个值: 作为资源路径一部分的数字值“id”, 和一个可选的查询参数“attrs”. 譬如, 给出模板“\textit{/v1/activities/\{id\}}”, 我们可以对“\textit{/v1/activities/5?attrs=x}”发出请求. 
+    
+    PUT操作也需要“id”的值, 但是不需要可选参数“attrs”. 此外, 在它的HTTP请求体里, 可以有一个用JSON表达的资源用于替换, 此处名为“ActivityProperties”. 图\ref{fig2}展示了这个对象的定义. 这个对象有许多不同类型的域, 如数值(如“id”), 字符串(如“name”), 日期(如“date\_published”), 数组(如“tags”)和一些其他对象(如“author”). 为这种PUT操作编写测试用例时, 不仅仅需要确定路径中的“id”, 还需要这种“ActivityProperties”对象的实例, 并且需要将之整理为一个JSON字符串来加入到HTTP请求的请求体中. 
+    
+    \begin{figure}
+      {
+      \tt
+        \scriptsize
+      \begin{lstlisting}[language=C++]
+"/v1/activities/{id}": { 
+  "get": {
+    "tags": [ 
+      "activities"
+    ],
+    "summary": "Read a specific activity", 
+    "description": "",
+    "operationId": "get",
+    "produces": [
+      "application/json" 
+    ],
+    "parameters": [ 
+      {
+        "name": "id", 
+        "in": "path", 
+        "required": true, 
+        "type": "integer", 
+        "format": "int64"
+      }, 
+      {
+        "name": "attrs",
+        "in": "query",
+        "description": "The attributes to include in the response. Comma-separated list.", 
+        "required": false,
+        "type": "string" 
+      }
+    ], 
+    "responses": {
+      "default": {
+        "description": "successful operation"
+      } 
+    }
+  }, 
+  "put": {
+    "tags": [ 
+      "activities"
+    ],
+    "summary": "Update an activity with new information.
+Activity properties not specified in the request will be cleared.", 
+    "description": "", 
+    "operationId": "update", 
+    "produces": [
+      "application/json" 
+    ],
+    "parameters": [ 
+      {
+        "name": "id", 
+        "in": "path", 
+        "required": true, 
+        "type": "integer", 
+        "format": "int64"
+      }, 
+      {
+         "in": "body", 
+         "name": "body", 
+         "required": false, 
+         "schema": {
+          "$ref": "#/definitions/ActivityProperties"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "successful operation",
+        "schema": {
+          "$ref": "#/definitions/Activity"
+        }
+      }
+    }
+  }
+        \end{lstlisting}
+        }
+      \caption{对\textit{/v1/activities/\{id\}}资源的两个操作(GET和PUT)的Swagger JSON定义}
+        \label{fig1}
+    \end{figure}
+    
+    \begin{figure}
+      {
+        \tt
+        \scriptsize
+      \begin{lstlisting}[language=C++]
+"ActivityProperties": { 
+  "type": "object", 
+  "properties": {
+    "id": {
+      "type": "integer", "format": "int64"},
+    "name": {
+      "type": "string",
+      "minLength": 0, "maxLength": 100 },
+    "date_published": { 
+      "type": "string", "format": "date-time"},
+    "date_created": { 
+      "type": "string", "format": "date-time"},
+    "date_updated": { 
+      "type": "string", "format": "date-time"},
+    "description_material": {
+      "type": "string",
+      "minLength": 0, "maxLength": 20000},
+    "description_introduction": {
+      "type": "string",
+      "minLength": 0, "maxLength": 20000},
+    "description_prepare": {
+      "type": "string",
+      "minLength": 0, "maxLength": 20000},
+    "description_main": {
+      "type": "string",
+      "minLength": 0, "maxLength": 20000},
+    "description_safety": {
+      "type": "string",
+      "minLength": 0, "maxLength": 20000},
+    "description_notes": {
+      "type": "string",
+      "minLength": 0, "maxLength": 20000},
+    "age_min": {
+      "type": "integer", "format": "int32",
+      "maximum": 100.0},
+    "age_max": {
+      "type": "integer", "format": "int32",
+      "maximum": 100.0},
+    "participants_min": {
+      "type": "integer", "format": "int32"},
+    "participants_max": { 
+      "type": "integer", "format": "int32"},
+    "time_min": { 
+      "type": "integer", "format": "int32"},
+    "time_max": { 
+      "type": "integer", "format": "int32"},
+    "featured": { 
+      "type": "boolean", "default": false},
+    "source": {
+      "type": "string"},
+    "tags": {
+      "type": "array",
+      "xml": {"name": "tag", "wrapped": true}, 
+      "items": {"$ref": "#/definitions/Tag"}},
+    "media_files": {
+      "type": "array",
+      "xml": {"name": "mediaFile", "wrapped": true}, 
+      "items": {"$ref": "#/definitions/MediaFile"}},
+    "author": {"$ref": "#/definitions/User"}, 
+    "activity": {"$ref": "#/definitions/Activity"}
+  }
+}
+        \end{lstlisting}
+        }
+        \caption{一个复杂对象类型的Swagger JSON定义}
+        \label{fig2}
+    \end{figure}
+    
+    \subsection{参照}
+    当使用白盒方法自动生成测试用例时, 比如努力最大化语句覆盖率时, 使用什么来作为自动\textit{参照}是一个问题\cite{barr2015oracle}. 参照可以被视为一个判断测试用例的结果是否正确的函数. 在手动测试中, 开发者确定对于给定测试用例的期望结果, 并将期望编写成断言以在测试用例里直接检查. 在自动测试生成中, 一次有成百上千的测试用例被产生, 这时候让开发者写断言就不是一种可行的选择了. 
+        
+  对参照问题并没有简单的解决办法, 不同的方法都有不同程度的成功但也有不同程度的局限\cite{barr2015oracle}. 在系统级别的测试中, 最明显的自动参照是检查当测试执行后整个被测系统是否崩溃(如C程序的段错误). 这种测试用例可以检测出软件故障, 但是不是所有故障都会导致应用的完全崩溃(有可能只是一小部分的故障是这种类型的). 另一种方法是编写形式化的规约(如前置/后置条件)作为自动参照, 但是这些在实际中较少使用. 
+        
+  在单元测试中, 我们可以查看被测类/方法抛出的异常\cite{fraser20151600}. 然而, 这里的一个主要问题是, 抛出的异常很多时候并不是故障的征兆, 而只是表明违反了未明确的前置条件(如输入为空, 但目标函数并没被要求需在空输入上运行). 
+        
+  尽管没有自动参照, 在\textit{回归测试}中生成的测试用例仍然是有用的. 举个例子, 如果一个被测函数$foo$接受一个整型数作为输入, 然后返回一个整型数作为计算结果, 那么一个自动生成的测试用例可以在一个断言中捕获到函数的当前行为, 举个例子: 
+        
+    {
+        \tt
+        \small
+        \begin{lstlisting}[language=java]
+int x = 5;
+int res = foo(x);
+assertEquals(9, res);
+    \end{lstlisting}
+    }
+        
+    现在, 测试生成工具可以选择生成一个测试用例, 其中输入值$x = 5$, 但是它不能知道是否应该期望输出为9(这是调用$foo(x)$的实际返回值). 开发者可以阅读测试用例, 然后确定是否9真的是期望的输出. 但是, 即使他不检查这个测试用例, 这个测试用例也会被加入到当前的测试用例集内, 然后作为连续集成过程(如Jenkins\footnote{https://jenkins.io})的一部分, 在每次有新代码变更时执行. 如果一次源代码的修改导致$foo$在输入为5时返回了不等于9的结果, 那么这个测试用例就会失败. 在这个时候, 开发者就有必要检查是否最近的变更导致了此函数出现错误(如果这是一个故障), 或者是否此函数的语义发生了变化.
+        
+    在RESTful API中, 生成的测试用例还可被用于回归测试. 测试用例在安全领域也十分有用: 比如, 一个引发403(未认证)状态返回的HTTP调用可以探测出权限检查被错误放宽的回归时故障. 状态码还可以被进一步用来作为自动参照. 虽然4xx的状态码不能说明RESTful web服务的故障, 但是5xx可以. 如果被测web服务的环境(如数据库)是正常运行的, 则5xx的状态码通常意味着此服务内的故障. 一个典型例子是异常抛出: 如果在RESTful端点处的业务逻辑抛出了异常, 应用服务器并不会崩溃. 这个异常会被捕获, 然后返回一个5xx(如500)的状态码. 注意: 如果用户的输入是无效的, 他只会得到4xx的状态码而非5xx. 如果不提前进行输入验证, 而是等到让端点处抛出异常, 则会导致两个主要问题: 
+    \begin{itemize}
+    \item 用户无从得知异常来源于用户自身, 而只会认为这是web服务的故障. 在组织中, 这个开发者用户就会浪费时间填写故障报告. 此外, 当他调用RESTful API时, 5xx的状态码不会给他任何修复提示. 
+        
+      \item RESTful端点可能对外部资源(如数据库和其他web服务)进行一系列操作, 这些操作可能要求具有原子性. 如果因为某个故障, 在部分操作而非全部操作完成后, 抛出了一个异常, 那么环境状态会变得不一致, 进而导致整个系统非正常运行.
+  \end{itemize}
+    
+    \begin{figure}
+        {
+        \tt
+        \small
+      \begin{lstlisting}[language=java]
+@GET @Timed
+@Path("{id}/file") 
+@Produces(MediaType.APPLICATION_OCTET_STREAM)
+@UnitOfWork
+@ApiOperation(value = "Download media file. Can resize " +
+  "images (but images will never be enlarged).") 
+public Response downloadFile(
+    @PathParam("id") long id, 
+    @ApiParam(value = "" +
+      "The maximum width/height of returned images. " + 
+      "The specified value will be rounded up to the " + 
+      "next ’power of 2’, e.g. 256, 512, 1024 and so on.")
+    @QueryParam("size") int size)
+    {
+    MediaFile mediaFile = dao.read(id); 
+    try {
+      URI sourceURI = new URI(mediaFile.getUri());
+        ...
+    } catch (IOException e) {
+      ... 
+    }
+  ...
+        \end{lstlisting}
+        }
+        \caption{一个处理GET请求的端点定义示例(Java语言, 使用DropWizard), 当请求不存在的资源时, 它不会返回404状态码, 而是因为空指针异常返回500状态码. }
+        \label{fig3}
+    \end{figure}
+        
+    图\ref{fig3}展示了一个有故障的端点定义的简单例子. 这个代码来自于我们实证研究中的一个项目. 此例中, 一个资源(媒体文件)由端点路径中的id参数映射(即\textit{@Path("\{id\}/file")}). 此id用于从数据库中读取这个资源(即\textit{dao.read(id)}), 但是代码没有对资源是否存在进行检查(如, 是否与\textit{null}不同). 因此, 如果一个测试用例使用了无效id, 语句\textit{mediaFile.getUri()}将导致空指针异常. 此异常向上传递至应用服务器(在此例中为Jetty), 服务器会创建一个状态码为500的HTTP响应, 而此处的期望正确响应应该是404(未找到)状态码. 
+
+    \subsection{代码测量}
+    为了生成高覆盖率的测试用例, 我们需要测量覆盖率本身. 否则, 我们无法判断某个测试用例比另一个的覆盖率高. 所以, 当被测系统(SUT)启动后, 它需要\textit{被装上测量工具}来收集覆盖率指标. 如何完成这一工作依赖于具体语言. 在本论文中, 对于我们的原型, 目前着重于Java语言. 
+    
+    要收集到覆盖率指标, 可以通过自动在被测系统中加入探针的方式. 为完成这一任务, 我们初始化一个截听所有类的加载的Java代理, 然后在被测系统的字节码中直接加入探针. 此过程可以使用一些工具来完全自动化, 如\textit{ea-agent-loader}\footnote{https://github.com/electronicarts/ea-agent-loader}和\textit{ASM}\footnote{http://asm.ow2.org/}. 此方法与Java单元测试生成工具如EvoSuite\cite{fraser2011evosuite}所使用的方法相同. 
+    
+    仅仅测量覆盖率是不够的. 我们知晓一个测试用例可以覆盖10\%的代码, 但仍无法知晓怎样覆盖更多代码. 代码不能被覆盖的原因常常是因为它被有着复杂谓词的if语句块限制. 随机的输入数据几乎不能满足这种复杂谓词限制. 这在基于搜索的单元测试中是个非常普遍的问题\cite{mcminn2004search}. 一种解决此问题的方法是定义\textit{启发值}来衡量一个测试数据与约束之间的距离. 举个例子, 给定约束$x=0$,虽然5和1000都不能满足约束, 但5在\textit{启发式意义上}比1000更接近于满足约束. 相关研究中, 最著名的启发方法是所谓的\textit{分支距离}\cite{korel1990automated}\cite{mcminn2004search}. 在我们的方法中, 使用了与单元测试同一类型的分支距离, 方法是在一个类的字节码首次加载时自动测量布尔谓词(该方法与代码覆盖率探针方法相同). 
+    
+    即使使用字节码上的操作(对Java虚拟机语言)可以度量代码覆盖率和分支距离, 如何提取这些值仍是问题. 在单元测试中, 测试数据生成工具与测试度量模块在同一进程中, 因此这些值可以直接获得. 在系统测试中这也是可行的: 让测试工具和被测系统在同一进程中运行, 如同一Java虚拟机中. 但是, 这不是最优的方法, 因为这限制了测试数据生成工具只适用于与工具使用相同语言编写的RESTful服务中. 并且, 还可能有第三方库的版本与测试工具和被测系统冲突的问题. 由于测试用例与RESTful API的开发语言是可以独立的(仅通过HTTP请求交互), 限制在某个语言上是不必要的. 
+    
+    我们的解决方法是让测试工具和被测系统运行在不同进程中. 当被测系统运行时, 我们使用一个库, 来提供自动测量被测系统代码的功能. 这个库可以自动提供RESTful API, 来用JSON格式反馈所有覆盖率和分支距离信息. 当生成和运行测试用例时, 测试工具可以使用这个API来计算测试用例的适应度值. 从而, 测试工具只需要一个版本, 对于每种目标程序语言(如Java, C\#和JavaScript), 我们只需要重新实现代码测量的库即可. 
+    
+    这个方法在单元测试上效果并不理想: 对外部进程进行HTTP请求带来的开销, 相比于运行一次单元测试来说太大. 而在系统级别测试中, 每一次执行测试会运行整个应用(在这里是RESTful web服务)一次. 虽然开销仍存在, 但更为可控, 尤其是当被测系统本身有复杂的逻辑, 或与外部服务有交互(如数据库)时. 
+    
+    虽然代码测量的开销变得更为可控, 它仍然需要被控制在一定限度内. 在我们的方法中, 特别考虑了以下两个优化: 
+    
+    \begin{itemize}
+      \item 当被测系统启动时, 开发者需指定需要测量的包. 若在被测系统启动时测量所有加载的类, 会是十分不经济的. 对于第三方库, 比如应用服务器(如Jetty和Tomcat), ORM库(如Hibernate), 就不应插入收集代码覆盖率的测量点. 
+        
+        \item 缺省时, 当请求被测系统的代码覆盖率和分支距离信息时, 并不会提取出所有信息: 仅反馈那些覆盖了新目标, 或者达到更好分支距离的测试用例的信息. 这样做的原因是, 若被测系统有10万行代码, 每次测试执行时, 都封装或解封有10万个元素的JSON数据是十分不现实的. 测试工具会明确询问需要哪个测试目标的信息. 如果一个目标被已有的测试用例完全覆盖的话, 为了覆盖其它目标而产生新测试用例时, 就不会有为了覆盖这个目标而存在的点. 
+    \end{itemize}
+    
+    \subsection{搜索算法}
+    现在已经有了测试用例的定义, 运行用例的方法, 以及收集运行指标(如代码覆盖率和分支距离)的方法, 那么我们就可以使用任何搜索算法了. 在我们的方法中, 试验了采用遗传算法(GA)来生成测试用例.
+    
+    我们方法的最终输出是一个测试套件, 它由一系列测试用例组成. 每个测试用例覆盖一个或多个测试目标. 此处我们考虑两种测试目标: (1)被测系统的语句覆盖; (2)不同API端点返回的HTTP状态码(除了达到的覆盖率之外, 我们不仅想覆盖正常场景如2xx, 还想覆盖用户错误与服务器故障). 
+    
+    由于我们需要测试套件上的进化, 我们使用了\textit{全测试套件}方法\cite{fraser2013whole}, 并额外利用了测试档案\cite{rojas2017detailed}. 遗传算法的个体是测试用例的集合, 它们被随机初始化, 且大小和长度可变. 测试套件的适应度是其中所有的测试用例的适应度之和. 杂交算子对双亲的测试用例进行混合, 产生新的后代. 突变算子对每个测试用例进行小的修改, 比如对一个数值变量增加或减少1.
+    
+    我们支持所有JSON的有效类型(如数字, 字符串, 日期, 数组和对象). 其中一些是特别处理的. 如, 对于日期和时间, 作为基因型, 我们将之视为6个有限数字值: 年, 月, 日, 小时, 分钟和秒. 除了考虑有效值(如秒需要在0-59以内), 为了检查被测系统对于无效时间戳的行为, 还考虑了无效值(如秒为-1). 当在一个JSON变量中使用这种日期时, 表现型为一个由这六个整数组成的日期字符串.
+    
+    当测试执行时, 我们会检查它覆盖的所有目标. 如果覆盖了一个新目标, 这个测试用例会从测试套件中复制出来放入测试档案中, 以防止在搜索过程中丢失(比如因为下一代中的突变算子). 在搜索过程结束后, 我们会收集所有测试档案中的测试用例, 删除冗余用例, 并将最小化的套件作为一个测试类文件写入磁盘.
+    
+    \subsection{工具实现}
+    我们用Kotlin实现了工具原型, 以对本论文讨论的新方法进行实验评估. 工具名为EvoMaster, 遵从LGPL开源协议发布. 
+    
+    为了与被测系统交互(启动/停止, 代码测量), 我们开发了一个Java库, 此库在理论上支持所有Java虚拟机语言(Java, Kotlin, Groovy, Scala等). 但目前我们仅在Java系统上使用. 我们的工具原型可以输出多种格式的测试用例, 如JUnit 4或5, 并支持Java和Kotlin两种语言. 测试套件是完全自包含的, 也就是说, 它们也处理被测系统的启动与停止. 测试用例在配置时, 默认被测系统在一个临时的TCP端口上启动, 这是测试用例可并行执行的必要条件(避免被测系统打开已被占用的TCP端口). 产生的测试用例可从IDE(如IntelliJ或Eclipse)直接调用, 并且可被加入Maven或Gradle, 成为项目构建的一部份. 
+    
+    在生成的测试用例中, 为了对被测系统进行HTTP请求, 我们使用了很流行的RestAssured\footnote{https://github.com/rest-assured/rest-assured}库. 生成的断言目前只处理HTTP返回状态码. 
+    
+    \subsection{人工准备}
+    \label{4-6}
+    相比于100\%全自动的单元测试工具如EvoSuite(用户只需选择需要被测的类), 我们的用于RESTful API系统/集成测试的工具原型还需要一些手工设置. 
+    
+    RESTful API的开发者需要导入我们的库, 然后创建一个继承自库中的\textit{RestController}类的子类. 开发者需要定义被测系统应如何启动, Swagger规约所在的位置, 以及需要进行代码测量的包等. 当然, 这些会因为RESTful API的实现方式不同而不同, 比如使用框架Spring\footnote{ https://github.com/spring-projects/spring-framework}, DropWizard\footnote{https://github.com/dropwizard/dropwizard}, Play\footnote{ https://github.com/playframework/playframework}, Spark\footnote{ https://github.com/perwendel/spark}或JEE等. 
+
+  \begin{figure}
+        {
+        \tt
+        \tiny
+      \begin{lstlisting}[language=java]
+public class EMController extends RestController {
+
+    private ConfigurableApplicationContext ctx;
+    private final int port;
+    private Connection connection;
+
+    public EMController(){this(0);}
+    public EMController(int port) {
+        this.port = port;
+    }
+
+    @Override public int getControllerPort(){
+        return port;
+     }
+
+     @Override public String startSut() {
+
+         ctx = SpringApplication.run(Application.class,
+             new String[]{"--server.port=0"});
+
+        if(connection != null){
+            try { connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        JdbcTemplate jdbc = ctx.getBean(
+                                    JdbcTemplate.class);
+        try {
+            connection = jdbc.getDataSource()
+                            .getConnection();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "http://localhost:"+getSutPort();
+    }
+
+    protected int getSutPort(){
+        return (Integer)((Map) ctx.getEnvironment()
+                .getPropertySources().get("server.ports")
+                .getSource()).get("local.server.port");
+    }
+
+    @Override public boolean isSutRunning() {
+        return ctx!=null && ctx.isRunning();
+    }
+
+    @Override public void stopSut() { ctx.stop();}
+
+    @Override public String getPackagePrefixesToCover() {
+        return "org.javiermf.features.";
+    }
+
+    @Override public void resetStateOfSUT() {
+        ScriptUtils.executeSqlScript(connection,
+            new ClassPathResource("/empty-db.sql"));
+        ScriptUtils.executeSqlScript(connection,
+            new ClassPathResource("/data-test.sql"));
+    }
+
+    @Override public String getUrlOfSwaggerJSON() {
+        return "http://localhost:"+getSutPort()+
+            "/swagger.json";
+    }
+
+    @Override public List<AuthenticationDto>
+                        getInfoForAuthentication(){
+        return null;
+    }
+}
+    \end{lstlisting}
+        }
+        \caption{为了对被测系统应用我们的测试用例生成工具, 开发者需要实现测试类, 此为测试类的示例. 在这个示例中, 被测系统使用Spring框架填写, 其中\textit{Application}是被测系统的主入口. }
+        \label{fig4}
+    \end{figure}
+
+    图\ref{fig4}展示了在我们的实证研究中, 为一个被测系统编写的一个测试类的例子. 此被测系统使用Spring框架. 这个类非常小, 并且只需要被编写一次. 即使API的内部实现有更改, 它也不需要更新. 在超类\textit{RestController}中的代码负责对被测系统进行自动化字节码测量, 超类的代码也负责启动一个RESTful服务来让测试工具能够远程调用这个类的方法. 
+    
+    此外, 开发者不仅需要启动/停止被测系统和提供其他信息(如Swagger文件的位置), 还有两个额外的工作: 
+    \begin{itemize}
+      \item RESTful API被要求是无状态的(所以RESTful API容易进行横向伸缩), 但是可以对外部角色有副作用, 如数据库. 此时, 在测试执行之前, 我们需要重置被测系统的环境状态. 这需要在\textit{resetStateOfSUT()}方法内实现. 在图\ref{fig4}所展现的场景中, 执行了两段SQL脚本: 一个是清空数据库, 另一个是用一些已有值填充数据库. 我们不需要自己手动编写这些脚本, 因为可以直接重用在被测系统的手动测例中已有的部分. 在未来的研究中, 如何自动化生成这些脚本是一个重要课题. 
+        
+        \item 如果一个RESTful API需要验证和授权, 这些信息可以通过\textit{getInfoForAuthentication()}方法由开发者提供. 因为, 即使测试工具完全可以访问存储着每个用户密码的数据库, 它仍不可能从这些哈希值中逆向工程出原始密码. 给定可用证书的集合, 那么测试工具就可以将它们等同视为其他变量, 在测试用例中使用它们, 比如生成带或不带验证的HTTP请求. 
+    \end{itemize}
+
+\section{实证研究}
+  在本论文中, 为了回答下列研究问题, 我们进行了实证研究. 
+    \begin{itemize}
+      \item RQ1: 我们的技术可以自动地在已存在的RESTful web服务中发现真正的故障吗？
+      \item RQ2: 自动生成的测试用例, 与已存在的手工编写的测试用例相比, 在代码覆盖率方面, 比较起来如何？
+        \item RQ3: 阻碍获得更好结果的主要因素有哪些？
+    \end{itemize}
+    
+    \subsection{实验系统选择}
+      为了从实证研究中得到强有力而可靠的结论, 理想情况下, 我们需要使用无差别的方法, 从大量被测系统中, 选择系统用于实验\cite{fraser2012sound}. 然而, 在这篇论文中, 这并不可能实现. 首先, 系统级别的测试需要许多手工设置(见\ref{4-6}). 其次, 我们的新工具原型仍然处于开发的早期阶段, 可能并不能处理许多形形色色的实际系统. 第三, 一个主要的问题是, RESTful web服务虽然在工业界的企业中十分流行, 但在开源项目中不很常见. 找到合适的项目, 并且完成复杂而必须的配置(如特殊的数据库和第三方工具的连接), 并不是一个简单的任务. 
+        
+        我们使用了Google BigQuery\footnote{https://cloud.google.com/bigquery}来分析在GitHub\footnote{https://github.com}上的Java工程的内容, GitHub是开源项目的主流仓库. 我们搜索了使用Swagger的Java工程, 排除了太大的工程(在目前的早期阶段可能太难处理)和太小太简单的工程, 然后我们下载并尝试编译和运行这些工程, 取得了不同程度的成功. 最后, 我们手动选择了两个不同的RESTful web服务, 以用于本论文的实证研究, 我们可以成功编译出并且无问题地运行这两个服务的测试用例. 这两个服务名叫\textit{FeaturesService}\footnote{https://github.com/JavierMF/features-service}和\textit{ScoutApi}\footnote{https://github.com/mikaelsvensson/scout-api}. 除了这两个开源web服务外, 我们还使用了一个工业界伙伴提供的RESTful web服务. 由于非公开协议, 我们只能提供关于此web服务的有限信息. 关于这三个RESTful web服务的资料总结见表\ref{table1}. 
+        
+  \begin{table}
+      \small
+      \centering
+      \begin{tabular}{lrrrrrrr}
+          \toprule
+            名称 & 类 & 代码 & 测试 & 测试代码 & 服务 & 数据库 & 外部 \\
+            名称 & 总数 & 行数 & 类数 & 行数 & 端点数 &  & 服务 \\
+            \midrule
+            \textit{FeaturesService} & 23 & 1247 & 14 & 822 & 18 & 是 & 否 \\
+            \textit{工业界服务} & 50 & 3584 & 13 & 2313 & 10 & 是 & 是 \\
+            \textit{ScoutApi} & 75 & 7479 & 21 & 2428 & 49 & 是 & 否 \\
+            \bottomrule
+        \end{tabular}
+        \caption{在实证研究中使用的3个RESTful web服务的资料. 我们统计了它们的Java类数目和代码行数, 也统计了它们的手工测试的类数目和代码行数. 我们还统计了服务端点数, 即对外的资源以及在资源上可用的HTTP方法的数目, 以及它们是否访问数据库和外部web服务.}
+        \label{table1}
+    \end{table}
+
+        这三个RESTful web服务包含的代码行数在2,000到10,000行不等(包含测试). 这在web服务, 尤其是在微服务架构中, 是典型的规模\cite{newman2015building}. 这是因为, 为了防止单体应用的固有缺陷, 当服务太大时会进行拆分, 使它们对于单个小团队始终处于可管理的规模. 然而, 这也意味着大型应用最终会由几百个不同服务组成. 在本论文中, 我们关注RESTful web服务的独立测试, 而不是在整个大型系统中整体测试. 
+    
+    \subsection{实验设定}
+      在案例研究的每个web服务里, 我们都运行工具来生成测试用例. 因为我们的技术基于随机算法, 每次实验都使用不同的随机种子重复30遍. 
+        
+        搜索算法的运行时间越长, 期望结果也越好. 在本论文的实验中, 我们的停止条件是10万次适应度求值. 在运行这些实验的计算机上, 每次运行大约花费二到四分钟. 考虑三个web服务, 每个服务重复30次, 那么我们总共运行90次实验, 对适应度总计有9百万次求值. 
+        
+        在搜索算法中, 有许多参数需要设置. 举例来说, 在遗传算法中, 需要指定群体大小, 杂交概率, 突变概率等等. 这些参数的选择会影响搜索算法的表现. \textit{调参}时, 我们会尝试不同的参数来找出在给定场景(此处为RESTful API的测试用例生成)下最好的参数组合. 幸运的是, 不仅仅有许多选择参数的通用指南, 而且搜索算法常常十分鲁棒: 没有调参, 而只使用默认设置也仍然能在平均意义上取得足够好的结果\cite{Arcuri2013Parameter}. 
+        
+        对于本论文中使用的遗传算法, 我们使用的群体大小为30, 杂交概率为0.7, 突变概率对于每个测试用例中的变量为$1/n$(其中$n$是变量的数目, 所以平均只有一个变量被改变). 当一个测试套件产生时, 它包含的测试用例数为1到30间的随机值. 
+    
+    \subsection{实验结果}
+    \label{5-3}
+    
+    \begin{table}
+      \small
+        \centering
+      \begin{tabular}{lrrrr}
+          \toprule
+            被测系统 & 测试用例数目 & 5xx数目 & 状态码种类数 & 最大值 \\
+            \midrule
+            \textit{FeaturesService} & 46.0 & 15.0 & 2.6 & 4 \\
+            \textit{工业界服务} & 25.4 & 6.0 & 2.5 & 3 \\
+            \textit{ScoutAPI} & 105.3 & 18.0 & 2.0 & 3 \\
+            \bottomrule
+        \end{tabular}
+        \caption{对每个测试系统运行30次的实验结果. 特别地, 我们统计了这些数据: 在最终测试套件中的测试用例数目的平均值; 有至少一个测试用例导致5xx状态码的服务终端数目的平均值; 每个服务终端的HTTP状态码种类数的平均值; 和单个服务终端的HTTP状态码种类数的最大值.}
+      \label{table2}
+    \end{table}
+    
+      表\ref{table2}展示了在三个不同RESTful web服务上的实验结果. 虽然在搜索时, 每次运行我们都进行了10万次HTTP请求, 但是最终的测试套件要小得多, 平均测试用例数目只在25(\textit{工业界服务})和105(\textit{ScoutAPI})之间. 这是因为我们只保留了对定义的测试目标(即代码语句和每个服务端点的HTTP返回状态码)有新覆盖贡献的测试用例.
+    
+    \begin{figure}
+        {
+        \tt
+        \tiny
+      \begin{lstlisting}[language=java]
+static EMController controller = new EMController();
+static String baseUrlOfSut;
+
+@BeforeClass
+public static void initClass() {
+    baseUrlOfSut = controller.startSut();
+    assertNotNull(baseUrlOfSut);
+}
+
+@AfterClass
+public static void tearDown() {
+    controller.stopSut();
+}
+
+@Before
+public void initTest() {
+    controller.resetStateOfSUT();
+}
+
+@Test
+public void test0() throws Exception {
+
+    given().header("Authorization", "ApiKey user")
+            .accept("*/*")
+            .get(baseUrlOfSut + 
+                "/api/v1/media_files/-4203492812/file" +
+                "?size=-141220")
+            .then()
+            .statusCode(500);
+    }
+}
+    \end{lstlisting}
+        }
+        \caption{}
+        \label{fig5}
+    \end{figure}
+        
+        这些测试用例平均可以让被测系统在39种情形下返回5xx状态码响应. 在\textit{FeaturesService}(15)和\textit{ScoutAPI}(18)中, 这些测试用例对应着系统的真实故障. 一个简单例子是我们之前展示的图\ref{fig3}. 图\ref{fig5}所示的测试用例检测出了这个故障. 注意: 对于此服务端点, 输入只需确定三个变量: (1)是否使用有效的认证头请求; (2)资源路径中的数字值"id"; (3)请求参数中的数字值"size". 
+        
+        然而, 在\textit{工业界服务}中, 并不是所有产生5xx响应的测试用例都意味着故障. 一种可能是, 500的返回码正是期望的正确行为. 这种可能的出现是因为相比于其他两个服务, \textit{工业界服务}会访问一些外部web服务. 在这种测试环境中, 常常会使用像WireMock\footnote{http://wiremock.org}这样的工具来模拟这些外部web服务的响应. 但是, 在我们的实验中未配置它. 所以, 每次被测系统想要连接到外部web服务时, 就会失败, 然后被测系统就不能完成操作. 这就是虽然被测系统没有故障, 但500返回码仍为正确响应的情形. 
+        
+        在表\ref{table2}中我们可以发现, 平均每个服务端点使用产生的测试数据调用时, 能返回至少两个不同的状态码. 在一些情况下, 测试数据可以让同一服务端点产生四个不同的状态码. 
+        
+        \fbox{\textbf{RQ1}: \textit{我们的新技术在被分析的web服务中, 自动找出了38个真实故障. }}
+    
+    \begin{table}
+      \small
+        \centering
+        \begin{tabular}{lrr}
+          \toprule
+            被测系统 & 覆盖率 & 手工用例覆盖率 \\
+            \midrule
+            \textit{FeaturesService} & 41\% & 82\% \\
+            \textit{工业界服务} & 18\% & 47\% \\
+            \textit{ScoutAPI} & 20\% & 43\% \\
+            \bottomrule
+        \end{tabular}
+        \caption{生成的测试用例与已存在的手工编写的测试用例的语句覆盖率结果对比. }
+        \label{table3}
+    \end{table}
+        
+        不仅仅是检测故障, 生成的测试套件还能用于回归测试. 为了用于此场景, 我们希望测试套件有高代码覆盖率. 否则, 对未被执行的语句的回归测试不会使任何测试失败. 表\ref{table3}展示了生成的测试用例的语句覆盖率结果. 这一结果与已经存在的手工编写的测试用例进行了对比. 代码覆盖率是通过直接在IntelliJ IDE中运行测试用例, 使用它的代码覆盖率工具而测量到的. 这也帮助我们检查了生成的测试用例是否能正常工作. 表\ref{table3}的结果明显表明, 自动生成的测试用例代码覆盖率更低. 
+        
+        \fbox{\shortstack[l]{\textbf{RQ2}: \textit{平均来说, 生成的测试套件的代码覆盖率介于18\%与41\%之间. }\\ \textit{这比被测系统中已有的测试用例的代码覆盖率要低.}}}
+    
+    \subsection{讨论}
+      \ref{5-3}小节的结果明确显示, 我们的新技术对软件工程师是有用的, 因为它能自动检测真实系统的真实故障. 然而, 代码覆盖率虽然让人乐观, 但还可以更好. 我们对一些只有很低覆盖率的测试用例进行了人工分析. 我们发现有至少三个主要原因造成了这种结果, 所以这里, 我们进一步讨论改进工具的可能途径: 
+        
+        \begin{itemize}
+          \item \textit{字符串约束}: 被测系统中的一些分支依赖字符串约束. 字符串很难处理, 这些年来, 对于单元测试, 已提出了一些基于专门的搜索算子\cite{Alshraideh2010Search}和种子策略\cite{Rojas2016Seeding}的技术. 我们的原型目前还不支持这些技术. 在未来, 可以实现并应用这些技术, 然后评估这些技术在我们的测试场景中是否表现良好. 
+            
+            \item \textit{数据库}: 即使一个数据库使用有效的数据初始化, 我们的技术目前都还不能检测数据库里面有什么, 更遑论生成或修改这些数据. 回忆图\ref{fig3}的例子: 即使数据库中存在有效数据, 我们的测试工具仍然无法倾向于生成id来匹配数据库中已有的键. 需要扩充测试工具来支持对所有被测系统中执行的SQL命令进行检测, 并在生成HTTP请求时使用这种信息. 进而, 数据库中数据的生成也应该是搜索的一部分: 一个测试用例将不再只是HTTP请求, 而是还包括SQL命令. 
+            
+            \item \textit{外部服务}: 类似数据库, 我们也需要处理对外部web服务的访问. 这意味着使用像WireMock这样的工具, 这应该在生成的测试用例中进行配置, 也应该成为搜索的一部分. 
+        \end{itemize}
+        
+        \fbox{\textbf{RQ3}: \textit{字符串约束, 数据库, 和外部web服务是目前主要的阻碍因素. }}
+
+\section{效度威胁}
+  内部效度威胁来源于一个事实: 我们的实证研究基于一个工具原型. 这个工具的错误也许会破坏我们结论的有效性. 虽然原型已经被仔细测试过, 我们仍然不能保证它是完全无故障的. 而且, 我们的技术基于随机算法, 随机性也许会影响结果. 为了消除这一问题, 每个实验都使用了不同的随机种子重复30遍. 
+    
+    外部效度威胁来源于一个事实: 在实证研究中只使用了三个RESTful web服务. 虽然这三个服务都不是简单的(代码行数都在两千到一万行不等), 但还是不能推广结论到其他web服务. 但是, 不仅仅是开源项目, 我们还使用了一个来自工业界的项目, 这有助于我们增加对这一结论的信心: 新方法对于从业者是有帮助的. 
+
+\section{结论}
+  RESTful web服务在工业界正流行. RESTful web服务的开发, 部署和伸缩的便利使之成为了在现代企业级应用中的关键利器. 这在企业级应用使用微服务架构设计时尤其明显\cite{newman2015building}. 
+    
+    但是, 测试RESTful web服务带来了许多挑战. 目前, 针对许多不同的测试环境, 已有许多自动化生成测试用例的技术被提了出来. 但是, 目前就我们所知, 还没有技术能够为RESTful web服务自动化生成集成白盒测试. 这类测试用例常常是工程师在开发web服务时编写的, 比如使用十分流行的RestAssured库. 
+    
+    在这篇论文中, 我们提出了自动从运行的web服务中收集白盒信息, 然后利用这些信息使用进化算法生成测试用例的技术. 我们已经在名叫EvoMaster的工具原型中实现了我们的新方法, 它使用Kotlin/Java编写, 我们在三个不同的web服务上运行了实验. 其中两个是已经存在的开源项目, 可在GitHub上获得. 第三个是由我们的一个工业界伙伴提供的. 这些服务的代码量在两千到一万行不等(包括已有的测试). 
+    
+    我们的技术生成的测试用例, 找出了这些web服务的38个故障. 然而, 与这些项目中已有的测试用例相比, 自动生成的测试用例的代码覆盖率要更低. 对结果的人工分析指出了造成这一现象的三个主要原因: 对字符串约束的处理, 对数据库访问的处理, 和对其他外部服务访问的处理. 
+    
+    未来的工作将需要集中于这三个主要问题. 进一步地, 为了在工业界获得更广泛影响, 扩展我们的工具以支持其他编写RESTful web服务常常使用的流行语言, 也是很重要的, 比如JavaScript/NodeJS和C\#. 由于在测试工具(使用Kotlin编写)和收集与导出白盒信息的库(Java编写, 但技术上可用于任何Java虚拟机语言)之间有明显的分离, 支持一种新语言其实只是重新实现那个库, 而非整个工具. 为了简化不同语言的集成, 我们的库本身被设计为一个RESTful web服务, 其中覆盖率信息以JSON格式导出. 但是, 代码测量(如Java虚拟机上的字节码操作)对不同语言而言可能很不相同.
+    
+    想要知道更多关于EvoMaster的信息, 请访问我们的网页: \texttt{www.evomaster.org}. 
+
+\section*{致谢}
+  我们想感谢Andreas BiØrn-Hansen, 他提出了宝贵的反馈意见; 还想感谢我们的工业界合作伙伴, 他们提供了其中一个RESTful服务. 这项工作由卢森堡国家研究基金资助(FNR/P10/03). 
+
+\title{书面翻译对应的原文索引}
+
+  \begin{flushleft}
+    Arcuri. Andrea. \\
+    Restful API Automated Test Case Generation\allowbreak[C]// \\
+    \allowbreak{}Software Quality, Reliability and Security (QRS),\\
+    2017 IEEE International Conference on:\\
+    IEEE, 2017: 9-20. \\
+    DOI 10.1109/QRS.2017.11
+  \end{flushleft}
+
+
