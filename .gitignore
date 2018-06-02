@@ -31,8 +31,6 @@ dist
 *.synctex.gz
 *.synctex.gz(busy)
 *.xdv
-dtx-style.sty
-thuthesis.cls
 thuthesis.cfg
 thuthesis.pdf
 main.pdf
