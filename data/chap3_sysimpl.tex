@@ -31,6 +31,7 @@
 	    自定义函数和子类的引入得益于Python的动态反射机制, 但这也要求这些自定义扩展使用Python实现.
 	    
 	    工具各个模块的功能如下:
+	    
 	    \begin{itemize}
 	        \item YAML词法解析器:\\
 	            此模块分析输入的三个脚本文件的格式, 分析其是否为合法YAML文档, 并建立文档树.
@@ -71,6 +72,22 @@ def run(api_doc_path, scenario_doc_path, testconf_doc_path=None, num_case=1, ver
             
 		\subsection{web端脚本编辑系统}
 
+            本文的工具与方法使用结构化的脚本文档作为输入, 脚本文档则常常需要手工撰写, 因此, 用户友好的脚本编辑和管理工具不可或缺.
+            
+            本工作为API行为脚本文档的编辑开发了一个在线web系统, 如图\ref{fig:frontend_screenshot}. 在此系统中, 用户可在线编辑与上传API行为脚本, 并获得解析结果的实时反馈. 如果脚本的内容合法, 前端会将所描述的API以类似于使用手册的形式进行可视化, 并展示于右栏. 为了提升可读性, 各个参数和响应体的定义采用折叠式的设计. 如果脚本的内容不合法, 系统会提示出错原因与位置. 每个注册用户拥有私有脚本文件夹, 后台记录了文件夹内各脚本的历史版本, 脚本也可从本地上传到此文件夹. 此外, 编辑系统还附带大量样例方便用户快送熟悉脚本语法.
+
+            \begin{figure}
+                \centering
+                \includegraphics[width=400pt]{frontend_screenshot.png}
+                \includegraphics[width=400pt]{frontend_screenshot2.png}
+                \caption{Web端脚本编辑系统前端截图. 通过此系统, 用户可以在线进行脚本的编辑与上传, 编辑时, 系统对API脚本进行实时解析, 以类似于API使用手册的形式展示脚本内容.}
+                \label{fig:frontend_screenshot}
+            \end{figure}
+            
+            此web编辑系统的后端采用Python语言和Django框架, 前端采用JQuery和Bootstrap库. 直接依托文件系统实现了用户和脚本托管功能, 没有数据库依赖, 十分轻量, 适合部署作为企业测试部门内部服务或单机使用.
+        
+            此外, 场景模型基于自动机模型, 故场景脚本不适于采用直接撰写的形式, 而适于用有向图表示, 并在图形化界面中拖拽生成\cite{junyiw17}. 开发创建场景模型的图形化界面将明显提高场景脚本的生成效率, 是未来可进一步研究的方向.
+            
         % extended version
 		% \subsection{*桌面端测试管理系统}
 
