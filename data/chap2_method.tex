@@ -53,7 +53,7 @@
             
             按照惯例, 概率有限状态自动机使用带标签边的有向图表示. 图\ref{fig:PFSA_example}展示了一个概率有限状态自动机的例子. 其中, 图的节点表示自动机的状态, 图的带标签边表示自动机的概率转移边, 图的节点数字表示自动机状态的终止概率.
             
-            \begin{figure}
+            \begin{figure}[!htb]
                 \centering
                 \includegraphics[width=300pt]{PFSA_example.pdf}
                 \caption{概率有限状态自动机的可视化表示}
@@ -183,7 +183,7 @@
             $f_d$和$f_a$函数虽然取上下文中之前的输入和输出数据作为参数, 但也可以不依赖于这两项, 此时, 则相当于直接对当前状态施加额外的输入数据限制和输出断言, 作用与$in_q$和$out_q$相似. 不过, 在具体实现时, $in_q$和$out_q$是由API规约文档引入的, 而$f_d$和$f_a$包含在场景模型内.
         
         \subsection{示例}
-            \begin{figure}
+            \begin{figure}[!htb]
                 \centering
                 \includegraphics[width=300pt]{scenario_example.pdf}
                 \caption{一个场景模型的实例. 输入数据依赖和响应体断言为: \\
@@ -222,7 +222,7 @@
             
             当合法输入使用JSON模式定义时, 由于每个数据结构都属于JSON模式定义的基本类型之一, 因此, 本文分类讨论, 为每个基本类型设计了缺省采样策略. 对于一些特殊子类型如日期、时间、二进制串等, 还定义了特殊采样策略. 具体策略见表\ref{tab:schemagen}. 特别地, 当多个条件均满足时, 则合理结合多个策略生成.
             
-            \begin{table}[]
+            \begin{table}[!htb]
                 \centering
                 \begin{tabular}{rll}
                     \toprule

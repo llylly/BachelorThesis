@@ -4,7 +4,7 @@
 
 	\section{核心工具Lapis}
 	
-	    \begin{figure}
+	    \begin{figure}[!htb]
 	        \centering
 	        \includegraphics[width=300pt]{tool_architecture3.pdf}
 	        \caption{Lapis工具整体架构. 工具的输入为API行为规约文档, 场景描述文档和测试配置. 输出为测试用例及其执行结果. 执行流从下往上, 从左往右.}
@@ -76,10 +76,10 @@ def run(api_doc_path, scenario_doc_path, testconf_doc_path=None, num_case=1, ver
             
             本工作为API行为脚本文档的编辑开发了一个在线web系统, 如图\ref{fig:frontend_screenshot}. 在此系统中, 用户可在线编辑与上传API行为脚本, 并获得解析结果的实时反馈. 如果脚本的内容合法, 前端会将所描述的API以类似于使用手册的形式进行可视化, 并展示于右栏. 为了提升可读性, 各个参数和响应体的定义采用折叠式的设计. 如果脚本的内容不合法, 系统会提示出错原因与位置. 每个注册用户拥有私有脚本文件夹, 后台记录了文件夹内各脚本的历史版本, 脚本也可从本地上传到此文件夹. 此外, 编辑系统还附带大量样例方便用户快送熟悉脚本语法.
 
-            \begin{figure}
+            \begin{figure}[!htb]
                 \centering
-                \includegraphics[width=400pt]{frontend_screenshot.png}
-                \includegraphics[width=400pt]{frontend_screenshot2.png}
+                \includegraphics[width=200pt]{frontend_screenshot.png}
+                \includegraphics[width=200pt]{frontend_screenshot2.png}
                 \caption{Web端脚本编辑系统前端截图. 通过此系统, 用户可以在线进行脚本的编辑与上传, 编辑时, 系统对API脚本进行实时解析, 以类似于API使用手册的形式展示脚本内容.}
                 \label{fig:frontend_screenshot}
             \end{figure}
