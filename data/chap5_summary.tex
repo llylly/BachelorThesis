@@ -1,3 +1,25 @@
 \chapter{总结与展望}
-
+    \section{与相关工作的对比}
+        本文提出了描述web API使用的场景模型, 与基于它的自动化测试方法. 目前, 在web API的自动化测试领域, 亦有类似研究. 本小节将本工作与学术界相关工作、工业界仍普遍采用的手工脚本测试法, 从表达控制流能力、表达数据流能力以及测试用例多样性方面, 进行了简要对比.
+    
+        具体来说, 考虑以下3种测试方法作为对比:
+        \begin{itemize}
+            \item 概率转移图\cite{junyiw17}: 此模型使用有向图表示. 在图上进行遍历, 并根据出边的权值概率性地选择下一节点, 便可以自动化地生成测试用例.
+            
+            \item 请求序列: 文献\cite{taox06}\cite{xiaodongg16}中, 通过静态分析和数据挖掘方法, 从开源仓库中获得API请求序列的频繁模式. 这种序列可以使用标准化格式编码, 并导入Swagger Inspector工具\cite{swaggerinspetor17}执行.
+            
+            \item 测试脚本: 在工业界的企业中, 最常见的仍然是使用测试人员手工编写的测试脚本.
+        \end{itemize}
+        
+        \begin{table}
+            \centering
+            \begin{tabular}{c|c}
+                 &  \\
+                 & 
+            \end{tabular}
+            \caption{Caption}
+            \label{tab:related_work_compare}
+        \end{table}
+        
+        表\ref{tab:related_work_compare}对这些不同方法进行了对比.
 
