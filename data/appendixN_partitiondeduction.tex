@@ -1,7 +1,7 @@
 \chapter{数据分区组合覆盖率的理论分析}
     \label{sec:partition_deduction}
     
-    实际上, 在本文的场景模式上运行组合测试策略生成测试用例, 可以等价于在所有数据分组组合构成的集合上进行放回的完全随机抽样. 使用$n$表示此集合的元素个数($n = |S|$), 使用$E(m)$表示经过$m$次抽样后, 抽到的不同元素数目的期望.
+    实际上, 在本文的场景模式上运行组合测试策略生成测试用例, 可以等价于在所有数据分区组合构成的集合上进行放回的完全随机抽样. 使用$n$表示此集合的元素个数($n = |S|$), 使用$E(m)$表示经过$m$次抽样后, 抽到的不同元素数目的期望.
     
     则$E(m)$满足
     \begin{equation}
@@ -15,11 +15,11 @@
     则有
     \begin{equation}
         \begin{aligned}
-        	E(m) & =\left(\dfrac{n-1}{n}\right)^{0} + \cdots + \left(\dfrac{n-1}{n}\right)^{m} \\
+        	E(m) & =\left(\dfrac{n-1}{n}\right)^{0} + \cdots + \left(\dfrac{n-1}{n}\right)^{m-1} \\
             & = n\left(1-(\dfrac{n-1}{n})^{m}\right).
     	\end{aligned}
     \end{equation}
     
-    令$k = \dfrac{m}{n}$, 则有$\dfrac{E(m)}{n} = 1 - \left((\dfrac{n-1}{n})^n\right)^k$. 由于$\lim_{n\to\infty} \left(\dfrac{n-1}{n}\right)^n = \lim_{n\to\infty} \dfrac{1}{\left(1+\dfrac{1}{n-1}\right)^n} = \dfrac{1}{e}$, 可得$\lim_{n\to\infty}\dfrac{E(m)}{n} = 1 - \dfrac{1}{e^{k}} = 1 - \dfrac{1}{e^\frac{m}{n}}$.
+    令$k = \dfrac{m}{n}$, 则有$\dfrac{E(m)}{n} = 1 - \left(\dfrac{n-1}{n}\right)^{n\cdot k}$. 由于$\lim_{n\to\infty} \left(\dfrac{n-1}{n}\right)^n = \lim_{n\to\infty} \dfrac{1}{\left(1+\dfrac{1}{n-1}\right)^n} = \dfrac{1}{e}$, 可得$\lim_{n\to\infty}\dfrac{E(m)}{n} = 1 - \dfrac{1}{e^{k}} = 1 - \dfrac{1}{e^\frac{m}{n}}$.
     
     当$m=n$时, $E(m) = 1 - 1 / e = 63.2\%$. 当$m=2n$, $\lim_{n\to\infty} E(m) = 1 - 1 / e^2 = 86.5\%$. 与\ref{sec:partition}小节的实验结果相符.
