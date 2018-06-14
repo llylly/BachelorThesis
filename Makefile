@@ -19,6 +19,8 @@ BSTFILE=*.bst
 SHUJICONTENTS=$(SHUJIMAIN).tex
 CLSFILES=dtx-style.sty $(PACKAGE).cls $(PACKAGE).cfg
 
+$xdvipdfmx="xdvipdfmx -E -o %D %O %S";
+
 # make deletion work on Windows
 ifdef SystemRoot
 	RM = del /Q
