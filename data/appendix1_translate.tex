@@ -12,14 +12,14 @@
 
 
 \section{引言}
-在企业体系中, 面向服务的架构(SOA), 特别是微服务架构\cite{newman2015building}, 已成为常规实践. SOA服务的市场规模在2013年已经达到了57亿美元, 这个市场的巨头有IBM, 微软, 甲骨文和SAP等公司. 预计至2020年\footnote{http://www.radiantinsights.com/research/services-oriented-architecture-soa}, 市场规模将达160亿美元. 目前, REST\cite{fielding2000architectural}是在企业体系中开发web服务的最常用方式. 
+在企业体系中, 面向服务的架构(SOA), 特别是微服务架构\citeappena{newman2015building}, 已成为常规实践. SOA服务的市场规模在2013年已经达到了57亿美元, 这个市场的巨头有IBM, 微软, 甲骨文和SAP等公司. 预计至2020年\footnote{http://www.radiantinsights.com/research/services-oriented-architecture-soa}, 市场规模将达160亿美元. 目前, REST\citeappena{fielding2000architectural}是在企业体系中开发web服务的最常用方式. 
 
 不仅在许多企业体系内部, 在互联网上,也有许多RESTful web服务. 如ProgrammableWeb\footnote{https://www.programmableweb.com/api-research}, 在互联网平台上, 目前已有超过16,000项Web API. 在Java生态系统中, 根据对1,700名工程师的调查\footnote{http://www.infoworld.com/article/3153148/java/oracle-survey-java-ee-
 users-want-rest-http2.html}, 对REST的更好支持(与HTTP/2支持一同)是在下一代Java企业版(当时为JEE8)中最期待的特性. 根据那项调查, 这是因为“当前Java中的云开发实践在很大程度上基于REST和异步”. 
 
-测试web服务, 尤其是RESTful的web服务, 有许多挑战\cite{canfora2006service}\cite{bozkurt2013testing}. 特别针对服务组合的复杂性, 和黑盒测试外部服务, 业已提出了各种技术. 当前的许多工作着重于处理SOAP的web服务. SOAP是一种基于XML的有完善定义的协议. 然而, 许多企业现已切换到REST服务, REST服务通常使用JSON(JavaScript对象表示法)作为消息本体的数据格式. 此外, 对于web服务的白盒测试, 由于需获得这些服务的源代码, 因此相关研究工作还较少. 
+测试web服务, 尤其是RESTful的web服务, 有许多挑战\citeappena{canfora2006service}\citeappena{bozkurt2013testing}. 特别针对服务组合的复杂性, 和黑盒测试外部服务, 业已提出了各种技术. 当前的许多工作着重于处理SOAP的web服务. SOAP是一种基于XML的有完善定义的协议. 然而, 许多企业现已切换到REST服务, REST服务通常使用JSON(JavaScript对象表示法)作为消息本体的数据格式. 此外, 对于web服务的白盒测试, 由于需获得这些服务的源代码, 因此相关研究工作还较少. 
 
-在本论文中, 我们提出了一种可以自动化生成RESTful web服务的集成测试的新方法. 我们的方法有两个主要目标: 最大化代码覆盖率(如语句覆盖率), 和使用HTTP返回状态码作为自动化测试参照物来检测故障. 我们的目标是在独立环境中测试RESTful服务, 这是工程师在开发服务时直接进行的一种典型测试类型. 为了生成测试, 我们使用了一种进化算法, 具体来说, 是使用整测试套件方法的遗传算法\cite{fraser2013whole}. 
+在本论文中, 我们提出了一种可以自动化生成RESTful web服务的集成测试的新方法. 我们的方法有两个主要目标: 最大化代码覆盖率(如语句覆盖率), 和使用HTTP返回状态码作为自动化测试参照物来检测故障. 我们的目标是在独立环境中测试RESTful服务, 这是工程师在开发服务时直接进行的一种典型测试类型. 为了生成测试, 我们使用了一种进化算法, 具体来说, 是使用整测试套件方法的遗传算法\citeappena{fraser2013whole}. 
 
 我们实现了一个名叫EvoMaster的工具原型, 并在三个不同的RESTful web服务上进行了实验. 其中两个服务是开源的, 第三个则由我们的一个工业界伙伴提供. 这些系统的代码行数从两千到一万行不等. 实验结果显示, 新方法可以在这些系统上发现38个真正的故障. 但是, 与已有的手写测试用例相比, 代码覆盖率还相对较低. 这主要是因为字符串约束和与数据库, 外部web服务的交互的存在. 要解决这些问题并进一步改进表现, 则还需要进一步的研究.
 
@@ -74,7 +74,7 @@ users-want-rest-http2.html}, 对REST的更好支持(与HTTP/2支持一同)是在
     \subsection{REST}
       多年以来, 编写web服务的主要方式是使用SOAP(简单对象访问协议), 这是一个使用XML包装信息的通信协议. 然而, 近年来, 在开发web服务时, 工业界有明显的向REST(表现层状态转移)过渡的趋势. 许多巨头已在使用REST, 如Google\footnote{https://developers.google.com/drive/v2/reference/}, Amazon\footnote{ http://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html}, Twitter\footnote{https://dev.twitter.com/rest/public}, Reddit\footnote{https://www.reddit.com/dev/api/}, LinkedIn\footnote{https://developer.linkedin.com/docs/rest-api}等等. 
 
-    REST的概念首先由一篇有很大影响力(目前引用量近6000)的2000年的博士论文\cite{fielding2000architectural}引入. REST不是一个协议(如SOAP那样), 而是一系列在HTTP上设计web服务的架构上的指南. 这种客户端 - 服务器应用需要满足一些约束, 才能被认为是RESTful的, 比如无状态; 资源需被明确指明是否可缓存; 资源需能用URI指定; 由客户端发送的资源表示(JSON或XML)需与资源的实际格式(如关系型数据库的一行)保持独立; 资源需通过合适的HTTP方法管理与组织, 比如某个资源应该由DELETE请求来删除而不是POST请求; 等等.
+    REST的概念首先由一篇有很大影响力(目前引用量近6000)的2000年的博士论文\citeappena{fielding2000architectural}引入. REST不是一个协议(如SOAP那样), 而是一系列在HTTP上设计web服务的架构上的指南. 这种客户端 - 服务器应用需要满足一些约束, 才能被认为是RESTful的, 比如无状态; 资源需被明确指明是否可缓存; 资源需能用URI指定; 由客户端发送的资源表示(JSON或XML)需与资源的实际格式(如关系型数据库的一行)保持独立; 资源需通过合适的HTTP方法管理与组织, 比如某个资源应该由DELETE请求来删除而不是POST请求; 等等.
         
         让我们考虑一个RESTful web服务的例子, 它让我们操作一个产品名录. 这些是可能的操作: 
         \begin{itemize}
@@ -87,29 +87,29 @@ users-want-rest-http2.html}, 对REST的更好支持(与HTTP/2支持一同)是在
         \end{itemize}
       注意这些URI并没有指定返回的表示格式. 一个服务器可以用不同的格式提供相同的资源, 如XML或JSON, 并且这个格式应该在请求头中指定. 
         
-        REST的另一个特性是所谓的HATEOAS(超媒体即是应用状态引擎), 即每个资源表示也应该提供往其它资源的链接(与网页的链接类似). 举个例子, 当请求\textit{GET /products}时, 不仅仅是所有产品列表应被返回, 还应有到其它可用请求方法的链接. 理想情形下, 给出API的一个主入口, 整个这个API应该能通过这些链接完全发掘到. 然而, HATEOS在实践中很少使用\cite{rodriguez2016rest}, 这主要是因为缺乏定义链接格式的合适规范(如JSON或XML模式), 并且这会给客户端带来额外的负担. 
+        REST的另一个特性是所谓的HATEOAS(超媒体即是应用状态引擎), 即每个资源表示也应该提供往其它资源的链接(与网页的链接类似). 举个例子, 当请求\textit{GET /products}时, 不仅仅是所有产品列表应被返回, 还应有到其它可用请求方法的链接. 理想情形下, 给出API的一个主入口, 整个这个API应该能通过这些链接完全发掘到. 然而, HATEOS在实践中很少使用\citeappena{rodriguez2016rest}, 这主要是因为缺乏定义链接格式的合适规范(如JSON或XML模式), 并且这会给客户端带来额外的负担. 
         
-        注意: REST不是协议, 而只是架构指南的集合\cite{fielding2000architectural}, 名词”REST“十分常见, 但在实践中常被误用. 虽然许多HTTP上的Web API严格上讲并不能被认为是完全REST的\cite{rodriguez2016rest}\cite{fielding2000architectural}, 但它们使用REST的冠名与宣传. 虽然在本论文中我们使用术语REST, 但提出的新技术可以用于任何通过HTTP端点访问, 并且载荷数据用类似JSON或XML的语言描述的web API. 
+        注意: REST不是协议, 而只是架构指南的集合\citeappena{fielding2000architectural}, 名词”REST“十分常见, 但在实践中常被误用. 虽然许多HTTP上的Web API严格上讲并不能被认为是完全REST的\citeappena{rodriguez2016rest}\citeappena{fielding2000architectural}, 但它们使用REST的冠名与宣传. 虽然在本论文中我们使用术语REST, 但提出的新技术可以用于任何通过HTTP端点访问, 并且载荷数据用类似JSON或XML的语言描述的web API. 
     
     \subsection{基于搜索的软件测试}
-    由于软件可以十分复杂, 测试数据生成是一项复杂的任务. 而且, 很多开发者都感觉编写测试用例枯燥乏味. 因此, 有许多相关研究旨在实现自动化生成高质量测试用例. 其中一个最简单的方法是随机生成测试用例\cite{arcuri2012random}. 虽然在一些场景中随机可能是很有效的, 但这可能仅仅只能覆盖被测软件的一小部分. 比如, 由于一个随机生成的字符串几乎不可能构成一个有效且符合格式的HTTP消息, 在RESTful API上使用裸随机测试策略是没有多少意义的. 
+    由于软件可以十分复杂, 测试数据生成是一项复杂的任务. 而且, 很多开发者都感觉编写测试用例枯燥乏味. 因此, 有许多相关研究旨在实现自动化生成高质量测试用例. 其中一个最简单的方法是随机生成测试用例\citeappena{arcuri2012random}. 虽然在一些场景中随机可能是很有效的, 但这可能仅仅只能覆盖被测软件的一小部分. 比如, 由于一个随机生成的字符串几乎不可能构成一个有效且符合格式的HTTP消息, 在RESTful API上使用裸随机测试策略是没有多少意义的. 
         
-        在多年来提出的许多不同测试技术中, 基于搜索的软件工程在解决许多软件工程问题中都格外有效\cite{harman2012search}, 尤其是在软件测试中\cite{ali2010systematic}, 如单元测试生成的高级工具EvoSuite\footnote{ https://github.com/EvoSuite/evosuite}\cite{fraser2011evosuite}\cite{fraser2014large}. 软件测试可以被建模为一个优化问题, 目标是最大化生成的测试套件的代码覆盖率和故障检测率. 进而, 只要对于给定的测试问题定义了适应度函数, 便可使用搜索算法来探索可能解的空间(在此上下文中为测试用例). 
+        在多年来提出的许多不同测试技术中, 基于搜索的软件工程在解决许多软件工程问题中都格外有效\citeappena{harman2012search}, 尤其是在软件测试中\citeappena{ali2010systematic}, 如单元测试生成的高级工具EvoSuite\footnote{ https://github.com/EvoSuite/evosuite}\citeappena{fraser2011evosuite}\citeappena{fraser2014large}. 软件测试可以被建模为一个优化问题, 目标是最大化生成的测试套件的代码覆盖率和故障检测率. 进而, 只要对于给定的测试问题定义了适应度函数, 便可使用搜索算法来探索可能解的空间(在此上下文中为测试用例). 
         
         有许多种类的搜索算法, 其中遗传算法(GA)可能是最为著名的. 在遗传算法中, 使用个体的集合来进行多代进化. 根据适应度值, 首先选择一些个体繁衍, 然后, 在采样新后代时, 使用杂交(混合来自父母双方的基因)和突变(小尺度变化). 当最优个体出现时, 或者搜索过程用尽了分配的时间时, 进化结束.
 
 \section{相关工作}
-  Candora和Di Penta讨论了SOA(面向服务架构)测试的趋势和挑战\cite{canfora2006testing}. 之后, 他们发表了一篇更详细的综述\cite{canfora2006service}. SOA的测试有许多不同的类型(单元测试, 集成测试, 回归测试, 鲁棒性测试等等), 参与者的角色也很多样, 有服务开发方, 服务提供方, 服务集成方, 第三方验证方等等. Bertolino等人\cite{bertolino2012trends}也讨论了SOA验证的趋势和挑战. 
+  Candora和Di Penta讨论了SOA(面向服务架构)测试的趋势和挑战\citeappena{canfora2006testing}. 之后, 他们发表了一篇更详细的综述\citeappena{canfora2006service}. SOA的测试有许多不同的类型(单元测试, 集成测试, 回归测试, 鲁棒性测试等等), 参与者的角色也很多样, 有服务开发方, 服务提供方, 服务集成方, 第三方验证方等等. Bertolino等人\citeappena{bertolino2012trends}也讨论了SOA验证的趋势和挑战. 
     
-    在这之后, Bozkurt等人\cite{bozkurt2013testing}也发表了关于SOA测试的综述, 在其中分析了177篇论文. 这篇综述的一项有趣结果是, 虽然近几年来关于SOA测试的论文数量一直在增加, 但只有11\%的论文提供了在实际系统上的实证实验. 71\%的论文完全没有提供任何实验结果, 甚至是试验系统上的实验也没有提供. 
+    在这之后, Bozkurt等人\citeappena{bozkurt2013testing}也发表了关于SOA测试的综述, 在其中分析了177篇论文. 这篇综述的一项有趣结果是, 虽然近几年来关于SOA测试的论文数量一直在增加, 但只有11\%的论文提供了在实际系统上的实证实验. 71\%的论文完全没有提供任何实验结果, 甚至是试验系统上的实验也没有提供. 
     
-    在这一领域内的许多工作集中在使用WSDL(Web服务描述语言)描述的SOAP web服务的黑盒测试上. 正如\cite{xu2005testing}\cite{bai2005wsdl}\cite{martin2006automated}\cite{ma2008wsdl}\cite{bartolini2009ws}\cite{li2016generating}, 人们提出了许多不同的策略. 如果这些服务也提供了语义模型(如使用OWL-S格式), 那么我们可以利用它来生成更“实际”的测试数据\cite{bozkurt2011automatically}. 当在SOA中的服务组件采用BPEL(Web服务业务流程执行语言)来描述时, 我们可以使用许多不同的技术来为这些组件生成测试\cite{wotawa2013fifty}\cite{jehan2014soa}. 
+    在这一领域内的许多工作集中在使用WSDL(Web服务描述语言)描述的SOAP web服务的黑盒测试上. 正如\citeappena{xu2005testing}\citeappena{bai2005wsdl}\citeappena{martin2006automated}\citeappena{ma2008wsdl}\citeappena{bartolini2009ws}\citeappena{li2016generating}, 人们提出了许多不同的策略. 如果这些服务也提供了语义模型(如使用OWL-S格式), 那么我们可以利用它来生成更“实际”的测试数据\citeappena{bozkurt2011automatically}. 当在SOA中的服务组件采用BPEL(Web服务业务流程执行语言)来描述时, 我们可以使用许多不同的技术来为这些组件生成测试\citeappena{wotawa2013fifty}\citeappena{jehan2014soa}. 
     
-    黑盒测试有它的优势, 但也有它的限制. 使用覆盖率指标可以提高测试生成的质量, 但是, web服务常常位于远程, 因而无法获取到源代码. 对于测试, Bartolini等人\cite{bartolini2011bringing}提出了一种将代码覆盖率反馈作为服务提供的方法, 该反馈不会暴露被测web服务的内部细节. 然而, 代码覆盖率探针的插桩必须手动完成. Ye和Jacobsen\cite{ye2013whitening}也提出了一种相似的方法. 在本论文中, 我们提出的方法也将代码覆盖率作为服务提供, 但却是全自动的(基于即时字节码操作). 
+    黑盒测试有它的优势, 但也有它的限制. 使用覆盖率指标可以提高测试生成的质量, 但是, web服务常常位于远程, 因而无法获取到源代码. 对于测试, Bartolini等人\citeappena{bartolini2011bringing}提出了一种将代码覆盖率反馈作为服务提供的方法, 该反馈不会暴露被测web服务的内部细节. 然而, 代码覆盖率探针的插桩必须手动完成. Ye和Jacobsen\citeappena{ye2013whitening}也提出了一种相似的方法. 在本论文中, 我们提出的方法也将代码覆盖率作为服务提供, 但却是全自动的(基于即时字节码操作). 
     
-    对于RESTful web服务, Chakrabarti和Kumar\cite{chakrabarti2009test}提供了一套测试框架, 该框架“根据穷举所有请求参数值的有效组合来自动生成测试用例”.  Seijas等人\cite{lamela2013towards}提出了一种以理想化的, 基于属性的测试模型为基础, 进行RESTful API测试生成的技术. Chakrabarti和Rodriquez\cite{chakrabarti2010connectedness}定义了一种形式化RESTful web服务的“连通性”, 并根据此模型生成测试的技术. 有形式化模型时, 一些技术就也可以使用了, 比如\cite{pinheiro2013model}和\cite{fertig2015model}中的技术. 我们的技术与以上技术都有着显著不同, 这体现在我们的技术不需要任何形式化模型的存在, 并且可以自动利用白盒信息, 且使用进化算法来指导生成有效测试.
+    对于RESTful web服务, Chakrabarti和Kumar\citeappena{chakrabarti2009test}提供了一套测试框架, 该框架“根据穷举所有请求参数值的有效组合来自动生成测试用例”.  Seijas等人\citeappena{lamela2013towards}提出了一种以理想化的, 基于属性的测试模型为基础, 进行RESTful API测试生成的技术. Chakrabarti和Rodriquez\citeappena{chakrabarti2010connectedness}定义了一种形式化RESTful web服务的“连通性”, 并根据此模型生成测试的技术. 有形式化模型时, 一些技术就也可以使用了, 比如\citeappena{pinheiro2013model}和\citeappena{fertig2015model}中的技术. 我们的技术与以上技术都有着显著不同, 这体现在我们的技术不需要任何形式化模型的存在, 并且可以自动利用白盒信息, 且使用进化算法来指导生成有效测试.
     
-    关于进化算法在web服务测试中的应用, Di Penta等人\cite{di2007search}为测试服务水平协议(SLA)提出了一种方法. 给定一个有着形式化协议的API, 比如“服务提供方保证服务购买者获得少于30 ms的响应时间与不低于300 dpi的解析度”, 便可以使用进化算法来生成不满足协议的测试用例. 适应度函数可以基于测试用例与违反被测协议之间的距离, 此函数的值可以在执行后求得. 
+    关于进化算法在web服务测试中的应用, Di Penta等人\citeappena{di2007search}为测试服务水平协议(SLA)提出了一种方法. 给定一个有着形式化协议的API, 比如“服务提供方保证服务购买者获得少于30 ms的响应时间与不低于300 dpi的解析度”, 便可以使用进化算法来生成不满足协议的测试用例. 适应度函数可以基于测试用例与违反被测协议之间的距离, 此函数的值可以在执行后求得. 
 
 \section{方法}
 
@@ -201,7 +201,7 @@ Activity properties not specified in the request will be cleared.",
   }
         \end{lstlisting}
         }
-      \caption{对\textit{/v1/activities/\{id\}}资源的两个操作(GET和PUT)的Swagger JSON定义}
+      \caption[]{对\textit{/v1/activities/\{id\}}资源的两个操作(GET和PUT)的Swagger JSON定义}
         \label{fig1}
     \end{figure}
     
@@ -274,16 +274,16 @@ Activity properties not specified in the request will be cleared.",
 }
         \end{lstlisting}
         }
-        \caption{一个复杂对象类型的Swagger JSON定义}
+        \caption[]{一个复杂对象类型的Swagger JSON定义}
         \label{fig2}
     \end{figure}
     
     \subsection{参照}
-    当使用白盒方法自动生成测试用例时, 比如努力最大化语句覆盖率时, 使用什么来作为自动\textit{参照}是一个问题\cite{barr2015oracle}. 参照可以被视为一个判断测试用例的结果是否正确的函数. 在手动测试中, 开发者确定对于给定测试用例的期望结果, 并将期望编写成断言以在测试用例里直接检查. 在自动测试生成中, 一次有成百上千的测试用例被产生, 这时候让开发者写断言就不是一种可行的选择了. 
+    当使用白盒方法自动生成测试用例时, 比如努力最大化语句覆盖率时, 使用什么来作为自动\textit{参照}是一个问题\citeappena{barr2015oracle}. 参照可以被视为一个判断测试用例的结果是否正确的函数. 在手动测试中, 开发者确定对于给定测试用例的期望结果, 并将期望编写成断言以在测试用例里直接检查. 在自动测试生成中, 一次有成百上千的测试用例被产生, 这时候让开发者写断言就不是一种可行的选择了. 
         
-  对参照问题并没有简单的解决办法, 不同的方法都有不同程度的成功但也有不同程度的局限\cite{barr2015oracle}. 在系统级别的测试中, 最明显的自动参照是检查当测试执行后整个被测系统是否崩溃(如C程序的段错误). 这种测试用例可以检测出软件故障, 但是不是所有故障都会导致应用的完全崩溃(有可能只是一小部分的故障是这种类型的). 另一种方法是编写形式化的规约(如前置/后置条件)作为自动参照, 但是这些在实际中较少使用. 
+  对参照问题并没有简单的解决办法, 不同的方法都有不同程度的成功但也有不同程度的局限\citeappena{barr2015oracle}. 在系统级别的测试中, 最明显的自动参照是检查当测试执行后整个被测系统是否崩溃(如C程序的段错误). 这种测试用例可以检测出软件故障, 但是不是所有故障都会导致应用的完全崩溃(有可能只是一小部分的故障是这种类型的). 另一种方法是编写形式化的规约(如前置/后置条件)作为自动参照, 但是这些在实际中较少使用. 
         
-  在单元测试中, 我们可以查看被测类/方法抛出的异常\cite{fraser20151600}. 然而, 这里的一个主要问题是, 抛出的异常很多时候并不是故障的征兆, 而只是表明违反了未明确的前置条件(如输入为空, 但目标函数并没被要求需在空输入上运行). 
+  在单元测试中, 我们可以查看被测类/方法抛出的异常\citeappena{fraser20151600}. 然而, 这里的一个主要问题是, 抛出的异常很多时候并不是故障的征兆, 而只是表明违反了未明确的前置条件(如输入为空, 但目标函数并没被要求需在空输入上运行). 
         
   尽管没有自动参照, 在\textit{回归测试}中生成的测试用例仍然是有用的. 举个例子, 如果一个被测函数$foo$接受一个整型数作为输入, 然后返回一个整型数作为计算结果, 那么一个自动生成的测试用例可以在一个断言中捕获到函数的当前行为, 举个例子: 
         
@@ -335,7 +335,7 @@ public Response downloadFile(
   ...
         \end{lstlisting}
         }
-        \caption{一个处理GET请求的端点定义示例(Java语言, 使用DropWizard), 当请求不存在的资源时, 它不会返回404状态码, 而是因为空指针异常返回500状态码. }
+        \caption[]{一个处理GET请求的端点定义示例(Java语言, 使用DropWizard), 当请求不存在的资源时, 它不会返回404状态码, 而是因为空指针异常返回500状态码. }
         \label{fig3}
     \end{figure}
         
@@ -344,9 +344,9 @@ public Response downloadFile(
     \subsection{代码测量}
     为了生成高覆盖率的测试用例, 我们需要测量覆盖率本身. 否则, 我们无法判断某个测试用例比另一个的覆盖率高. 所以, 当被测系统(SUT)启动后, 它需要\textit{被装上测量工具}来收集覆盖率指标. 如何完成这一工作依赖于具体语言. 在本论文中, 对于我们的原型, 目前着重于Java语言. 
     
-    要收集到覆盖率指标, 可以通过自动在被测系统中加入探针的方式. 为完成这一任务, 我们初始化一个截听所有类的加载的Java代理, 然后在被测系统的字节码中直接加入探针. 此过程可以使用一些工具来完全自动化, 如\textit{ea-agent-loader}\footnote{https://github.com/electronicarts/ea-agent-loader}和\textit{ASM}\footnote{http://asm.ow2.org/}. 此方法与Java单元测试生成工具如EvoSuite\cite{fraser2011evosuite}所使用的方法相同. 
+    要收集到覆盖率指标, 可以通过自动在被测系统中加入探针的方式. 为完成这一任务, 我们初始化一个截听所有类的加载的Java代理, 然后在被测系统的字节码中直接加入探针. 此过程可以使用一些工具来完全自动化, 如\textit{ea-agent-loader}\footnote{https://github.com/electronicarts/ea-agent-loader}和\textit{ASM}\footnote{http://asm.ow2.org/}. 此方法与Java单元测试生成工具如EvoSuite\citeappena{fraser2011evosuite}所使用的方法相同. 
     
-    仅仅测量覆盖率是不够的. 我们知晓一个测试用例可以覆盖10\%的代码, 但仍无法知晓怎样覆盖更多代码. 代码不能被覆盖的原因常常是因为它被有着复杂谓词的if语句块限制. 随机的输入数据几乎不能满足这种复杂谓词限制. 这在基于搜索的单元测试中是个非常普遍的问题\cite{mcminn2004search}. 一种解决此问题的方法是定义\textit{启发值}来衡量一个测试数据与约束之间的距离. 举个例子, 给定约束$x=0$,虽然5和1000都不能满足约束, 但5在\textit{启发式意义上}比1000更接近于满足约束. 相关研究中, 最著名的启发方法是所谓的\textit{分支距离}\cite{korel1990automated}\cite{mcminn2004search}. 在我们的方法中, 使用了与单元测试同一类型的分支距离, 方法是在一个类的字节码首次加载时自动测量布尔谓词(该方法与代码覆盖率探针方法相同). 
+    仅仅测量覆盖率是不够的. 我们知晓一个测试用例可以覆盖10\%的代码, 但仍无法知晓怎样覆盖更多代码. 代码不能被覆盖的原因常常是因为它被有着复杂谓词的if语句块限制. 随机的输入数据几乎不能满足这种复杂谓词限制. 这在基于搜索的单元测试中是个非常普遍的问题\citeappena{mcminn2004search}. 一种解决此问题的方法是定义\textit{启发值}来衡量一个测试数据与约束之间的距离. 举个例子, 给定约束$x=0$,虽然5和1000都不能满足约束, 但5在\textit{启发式意义上}比1000更接近于满足约束. 相关研究中, 最著名的启发方法是所谓的\textit{分支距离}\citeappena{korel1990automated}\citeappena{mcminn2004search}. 在我们的方法中, 使用了与单元测试同一类型的分支距离, 方法是在一个类的字节码首次加载时自动测量布尔谓词(该方法与代码覆盖率探针方法相同). 
     
     即使使用字节码上的操作(对Java虚拟机语言)可以度量代码覆盖率和分支距离, 如何提取这些值仍是问题. 在单元测试中, 测试数据生成工具与测试度量模块在同一进程中, 因此这些值可以直接获得. 在系统测试中这也是可行的: 让测试工具和被测系统在同一进程中运行, 如同一Java虚拟机中. 但是, 这不是最优的方法, 因为这限制了测试数据生成工具只适用于与工具使用相同语言编写的RESTful服务中. 并且, 还可能有第三方库的版本与测试工具和被测系统冲突的问题. 由于测试用例与RESTful API的开发语言是可以独立的(仅通过HTTP请求交互), 限制在某个语言上是不必要的. 
     
@@ -367,7 +367,7 @@ public Response downloadFile(
     
     我们方法的最终输出是一个测试套件, 它由一系列测试用例组成. 每个测试用例覆盖一个或多个测试目标. 此处我们考虑两种测试目标: (1)被测系统的语句覆盖; (2)不同API端点返回的HTTP状态码(除了达到的覆盖率之外, 我们不仅想覆盖正常场景如2xx, 还想覆盖用户错误与服务器故障). 
     
-    由于我们需要测试套件上的进化, 我们使用了\textit{全测试套件}方法\cite{fraser2013whole}, 并额外利用了测试档案\cite{rojas2017detailed}. 遗传算法的个体是测试用例的集合, 它们被随机初始化, 且大小和长度可变. 测试套件的适应度是其中所有的测试用例的适应度之和. 杂交算子对双亲的测试用例进行混合, 产生新的后代. 突变算子对每个测试用例进行小的修改, 比如对一个数值变量增加或减少1.
+    由于我们需要测试套件上的进化, 我们使用了\textit{全测试套件}方法\citeappena{fraser2013whole}, 并额外利用了测试档案\citeappena{rojas2017detailed}. 遗传算法的个体是测试用例的集合, 它们被随机初始化, 且大小和长度可变. 测试套件的适应度是其中所有的测试用例的适应度之和. 杂交算子对双亲的测试用例进行混合, 产生新的后代. 突变算子对每个测试用例进行小的修改, 比如对一个数值变量增加或减少1.
     
     我们支持所有JSON的有效类型(如数字, 字符串, 日期, 数组和对象). 其中一些是特别处理的. 如, 对于日期和时间, 作为基因型, 我们将之视为6个有限数字值: 年, 月, 日, 小时, 分钟和秒. 除了考虑有效值(如秒需要在0-59以内), 为了检查被测系统对于无效时间戳的行为, 还考虑了无效值(如秒为-1). 当在一个JSON变量中使用这种日期时, 表现型为一个由这六个整数组成的日期字符串.
     
@@ -463,7 +463,7 @@ public class EMController extends RestController {
 }
     \end{lstlisting}
         }
-        \caption{为了对被测系统应用我们的测试用例生成工具, 开发者需要实现测试类, 此为测试类的示例. 在这个示例中, 被测系统使用Spring框架填写, 其中\textit{Application}是被测系统的主入口. }
+        \caption[]{为了对被测系统应用我们的测试用例生成工具, 开发者需要实现测试类, 此为测试类的示例. 在这个示例中, 被测系统使用Spring框架填写, 其中\textit{Application}是被测系统的主入口. }
         \label{fig4}
     \end{figure}
 
@@ -485,7 +485,7 @@ public class EMController extends RestController {
     \end{itemize}
     
     \subsection{实验系统选择}
-      为了从实证研究中得到强有力而可靠的结论, 理想情况下, 我们需要使用无差别的方法, 从大量被测系统中, 选择系统用于实验\cite{fraser2012sound}. 然而, 在这篇论文中, 这并不可能实现. 首先, 系统级别的测试需要许多手工设置(见\ref{4-6}). 其次, 我们的新工具原型仍然处于开发的早期阶段, 可能并不能处理许多形形色色的实际系统. 第三, 一个主要的问题是, RESTful web服务虽然在工业界的企业中十分流行, 但在开源项目中不很常见. 找到合适的项目, 并且完成复杂而必须的配置(如特殊的数据库和第三方工具的连接), 并不是一个简单的任务. 
+      为了从实证研究中得到强有力而可靠的结论, 理想情况下, 我们需要使用无差别的方法, 从大量被测系统中, 选择系统用于实验\citeappena{fraser2012sound}. 然而, 在这篇论文中, 这并不可能实现. 首先, 系统级别的测试需要许多手工设置(见\ref{4-6}). 其次, 我们的新工具原型仍然处于开发的早期阶段, 可能并不能处理许多形形色色的实际系统. 第三, 一个主要的问题是, RESTful web服务虽然在工业界的企业中十分流行, 但在开源项目中不很常见. 找到合适的项目, 并且完成复杂而必须的配置(如特殊的数据库和第三方工具的连接), 并不是一个简单的任务. 
         
         我们使用了Google BigQuery\footnote{https://cloud.google.com/bigquery}来分析在GitHub\footnote{https://github.com}上的Java工程的内容, GitHub是开源项目的主流仓库. 我们搜索了使用Swagger的Java工程, 排除了太大的工程(在目前的早期阶段可能太难处理)和太小太简单的工程, 然后我们下载并尝试编译和运行这些工程, 取得了不同程度的成功. 最后, 我们手动选择了两个不同的RESTful web服务, 以用于本论文的实证研究, 我们可以成功编译出并且无问题地运行这两个服务的测试用例. 这两个服务名叫\textit{FeaturesService}\footnote{https://github.com/JavierMF/features-service}和\textit{ScoutApi}\footnote{https://github.com/mikaelsvensson/scout-api}. 除了这两个开源web服务外, 我们还使用了一个工业界伙伴提供的RESTful web服务. 由于非公开协议, 我们只能提供关于此web服务的有限信息. 关于这三个RESTful web服务的资料总结见表\ref{table1}. 
         
@@ -502,18 +502,18 @@ public class EMController extends RestController {
             \textit{ScoutApi} & 75 & 7479 & 21 & 2428 & 49 & 是 & 否 \\
             \bottomrule
         \end{tabular}
-        \caption{在实证研究中使用的3个RESTful web服务的资料. 我们统计了它们的Java类数目和代码行数, 也统计了它们的手工测试的类数目和代码行数. 我们还统计了服务端点数, 即对外的资源以及在资源上可用的HTTP方法的数目, 以及它们是否访问数据库和外部web服务.}
+        \caption[]{在实证研究中使用的3个RESTful web服务的资料. 我们统计了它们的Java类数目和代码行数, 也统计了它们的手工测试的类数目和代码行数. 我们还统计了服务端点数, 即对外的资源以及在资源上可用的HTTP方法的数目, 以及它们是否访问数据库和外部web服务.}
         \label{table1}
     \end{table}
 
-        这三个RESTful web服务包含的代码行数在2,000到10,000行不等(包含测试). 这在web服务, 尤其是在微服务架构中, 是典型的规模\cite{newman2015building}. 这是因为, 为了防止单体应用的固有缺陷, 当服务太大时会进行拆分, 使它们对于单个小团队始终处于可管理的规模. 然而, 这也意味着大型应用最终会由几百个不同服务组成. 在本论文中, 我们关注RESTful web服务的独立测试, 而不是在整个大型系统中整体测试. 
+        这三个RESTful web服务包含的代码行数在2,000到10,000行不等(包含测试). 这在web服务, 尤其是在微服务架构中, 是典型的规模\citeappena{newman2015building}. 这是因为, 为了防止单体应用的固有缺陷, 当服务太大时会进行拆分, 使它们对于单个小团队始终处于可管理的规模. 然而, 这也意味着大型应用最终会由几百个不同服务组成. 在本论文中, 我们关注RESTful web服务的独立测试, 而不是在整个大型系统中整体测试. 
     
     \subsection{实验设定}
       在案例研究的每个web服务里, 我们都运行工具来生成测试用例. 因为我们的技术基于随机算法, 每次实验都使用不同的随机种子重复30遍. 
         
         搜索算法的运行时间越长, 期望结果也越好. 在本论文的实验中, 我们的停止条件是10万次适应度求值. 在运行这些实验的计算机上, 每次运行大约花费二到四分钟. 考虑三个web服务, 每个服务重复30次, 那么我们总共运行90次实验, 对适应度总计有9百万次求值. 
         
-        在搜索算法中, 有许多参数需要设置. 举例来说, 在遗传算法中, 需要指定群体大小, 杂交概率, 突变概率等等. 这些参数的选择会影响搜索算法的表现. \textit{调参}时, 我们会尝试不同的参数来找出在给定场景(此处为RESTful API的测试用例生成)下最好的参数组合. 幸运的是, 不仅仅有许多选择参数的通用指南, 而且搜索算法常常十分鲁棒: 没有调参, 而只使用默认设置也仍然能在平均意义上取得足够好的结果\cite{Arcuri2013Parameter}. 
+        在搜索算法中, 有许多参数需要设置. 举例来说, 在遗传算法中, 需要指定群体大小, 杂交概率, 突变概率等等. 这些参数的选择会影响搜索算法的表现. \textit{调参}时, 我们会尝试不同的参数来找出在给定场景(此处为RESTful API的测试用例生成)下最好的参数组合. 幸运的是, 不仅仅有许多选择参数的通用指南, 而且搜索算法常常十分鲁棒: 没有调参, 而只使用默认设置也仍然能在平均意义上取得足够好的结果\citeappena{Arcuri2013Parameter}. 
         
         对于本论文中使用的遗传算法, 我们使用的群体大小为30, 杂交概率为0.7, 突变概率对于每个测试用例中的变量为$1/n$(其中$n$是变量的数目, 所以平均只有一个变量被改变). 当一个测试套件产生时, 它包含的测试用例数为1到30间的随机值. 
     
@@ -532,7 +532,7 @@ public class EMController extends RestController {
             \textit{ScoutAPI} & 105.3 & 18.0 & 2.0 & 3 \\
             \bottomrule
         \end{tabular}
-        \caption{对每个测试系统运行30次的实验结果. 特别地, 我们统计了这些数据: 在最终测试套件中的测试用例数目的平均值; 有至少一个测试用例导致5xx状态码的服务终端数目的平均值; 每个服务终端的HTTP状态码种类数的平均值; 和单个服务终端的HTTP状态码种类数的最大值.}
+        \caption[]{对每个测试系统运行30次的实验结果. 特别地, 我们统计了这些数据: 在最终测试套件中的测试用例数目的平均值; 有至少一个测试用例导致5xx状态码的服务终端数目的平均值; 每个服务终端的HTTP状态码种类数的平均值; 和单个服务终端的HTTP状态码种类数的最大值.}
       \label{table2}
     \end{table}
     
@@ -576,7 +576,7 @@ public void test0() throws Exception {
 }
     \end{lstlisting}
         }
-        \caption{为图\ref{fig3}所示端点自动生成的RestAssured测试(Java语言, 使用JUnit 4框架). 这里, 我们也展示了自动开启/停止/重启被测系统的辅助代码.}
+        \caption[]{为图\ref{fig3}所示端点自动生成的RestAssured测试(Java语言, 使用JUnit 4框架). 这里, 我们也展示了自动开启/停止/重启被测系统的辅助代码.}
         \label{fig5}
     \end{figure}
         
@@ -600,7 +600,7 @@ public void test0() throws Exception {
             \textit{ScoutAPI} & 20\% & 43\% \\
             \bottomrule
         \end{tabular}
-        \caption{生成的测试用例与已存在的手工编写的测试用例的语句覆盖率结果对比. }
+        \caption[]{生成的测试用例与已存在的手工编写的测试用例的语句覆盖率结果对比. }
         \label{table3}
     \end{table}
         
@@ -612,7 +612,7 @@ public void test0() throws Exception {
       \ref{5-3}小节的结果明确显示, 我们的新技术对软件工程师是有用的, 因为它能自动检测真实系统的真实故障. 然而, 代码覆盖率虽然让人乐观, 但还可以更好. 我们对一些只有很低覆盖率的测试用例进行了人工分析. 我们发现有至少三个主要原因造成了这种结果, 所以这里, 我们进一步讨论改进工具的可能途径: 
         
         \begin{itemize}
-          \item \textit{字符串约束}: 被测系统中的一些分支依赖字符串约束. 字符串很难处理, 这些年来, 对于单元测试, 已提出了一些基于专门的搜索算子\cite{Alshraideh2010Search}和种子策略\cite{Rojas2016Seeding}的技术. 我们的原型目前还不支持这些技术. 在未来, 可以实现并应用这些技术, 然后评估这些技术在我们的测试场景中是否表现良好. 
+          \item \textit{字符串约束}: 被测系统中的一些分支依赖字符串约束. 字符串很难处理, 这些年来, 对于单元测试, 已提出了一些基于专门的搜索算子\citeappena{Alshraideh2010Search}和种子策略\citeappena{Rojas2016Seeding}的技术. 我们的原型目前还不支持这些技术. 在未来, 可以实现并应用这些技术, 然后评估这些技术在我们的测试场景中是否表现良好. 
             
             \item \textit{数据库}: 即使一个数据库使用有效的数据初始化, 我们的技术目前都还不能检测数据库里面有什么, 更遑论生成或修改这些数据. 回忆图\ref{fig3}的例子: 即使数据库中存在有效数据, 我们的测试工具仍然无法倾向于生成id来匹配数据库中已有的键. 需要扩充测试工具来支持对所有被测系统中执行的SQL命令进行检测, 并在生成HTTP请求时使用这种信息. 进而, 数据库中数据的生成也应该是搜索的一部分: 一个测试用例将不再只是HTTP请求, 而是还包括SQL命令. 
             
@@ -627,7 +627,7 @@ public void test0() throws Exception {
     外部效度威胁来源于一个事实: 在实证研究中只使用了三个RESTful web服务. 虽然这三个服务都不是简单的(代码行数都在两千到一万行不等), 但还是不能推广结论到其他web服务. 但是, 不仅仅是开源项目, 我们还使用了一个来自工业界的项目, 这有助于我们增加对这一结论的信心: 新方法对于从业者是有帮助的. 
 
 \section{结论}
-  RESTful web服务在工业界正流行. RESTful web服务的开发, 部署和伸缩的便利使之成为了在现代企业级应用中的关键利器. 这在企业级应用使用微服务架构设计时尤其明显\cite{newman2015building}. 
+  RESTful web服务在工业界正流行. RESTful web服务的开发, 部署和伸缩的便利使之成为了在现代企业级应用中的关键利器. 这在企业级应用使用微服务架构设计时尤其明显\citeappena{newman2015building}. 
     
     但是, 测试RESTful web服务带来了许多挑战. 目前, 针对许多不同的测试环境, 已有许多自动化生成测试用例的技术被提了出来. 但是, 目前就我们所知, 还没有技术能够为RESTful web服务自动化生成集成白盒测试. 这类测试用例常常是工程师在开发web服务时编写的, 比如使用十分流行的RestAssured库. 
     
@@ -644,13 +644,21 @@ public void test0() throws Exception {
 
 \title{书面翻译对应的原文索引}
 
-  \begin{flushleft}
-    Arcuri. Andrea. \\
-    Restful API Automated Test Case Generation\allowbreak[C]// \\
-    \allowbreak{}Software Quality, Reliability and Security (QRS),\\
-    2017 IEEE International Conference on:\\
-    IEEE, 2017: 9-20. \\
+  \begin{itemize}
+    \item Arcuri. Andrea. 
+    Restful API Automated Test Case Generation\allowbreak[C]// 
+    \allowbreak{}Software Quality, Reliability and Security (QRS),
+    2017 IEEE International Conference on:
+    IEEE, 2017: 9-20. 
     DOI 10.1109/QRS.2017.11
-  \end{flushleft}
+  \end{itemize}
 
+%% 参考文献
+% 注意：至少需要引用一篇参考文献，否则下面两行可能引起编译错误。
+% 如果不需要参考文献，请将下面两行删除或注释掉。
+% 数字式引用
+\bibliographystyleappena{thuthesis-numeric}
+% 作者-年份式引用
+% \bibliographystyle{thuthesis-author-year}
+\bibliographyappena{ref/refs,ref/appendix1bib}
 
