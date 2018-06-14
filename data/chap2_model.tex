@@ -42,7 +42,7 @@
             \scriptsize
             \tt
             
-                \begin{lstlisting}[language=C++]
+                \begin{lstlisting}[language=yaml]
 openapi: 3.0.0
 servers: [url: 'oss://127.0.0.1:8080']
 info:
@@ -238,6 +238,7 @@ paths:
             \label{def:our}
             场景模型是一个元组
             \begin{equation}
+                \label{eq:scenario_model}
                  \mathcal{A} := <Q_{\mathcal{A}}, \Sigma, \sigma_{\mathcal{A}}, I_{\mathcal{A}}, F_{\mathcal{A}}, P_{\mathcal{A}}>,
             \end{equation}
             
@@ -269,6 +270,7 @@ paths:
             
             状态$q \in Q_{\mathcal{A}}$的定义是一个元组
             \begin{equation}
+                \label{eq:scenario_model_state}
                 q := <t_q, in_q, out_q, d_q, a_q>,
             \end{equation}
             其中:
@@ -291,6 +293,7 @@ paths:
             
             在状态$q$的定义中, 每一项请求数据依赖$d \in d_q$都是一个元组
             \begin{equation}
+                \label{eq:scenario_request_depen}
                 d := <q_d, index_d, f_d>,
             \end{equation}
             它的各项含义为:
@@ -343,11 +346,13 @@ paths:
             
             \item \textbf{请求数据无法生成.} 当合法请求数据集合为空时, 无法生成请求数据. 另外, 如果请求数据依赖集合中有错误定义, 如无法找到$(q_d, index_d)$对应的状态时, 或$f_d(i_{now}, o_{now})$为空集时, 无法生成满足依赖的请求数据. 无法生成请求数据则场景模型会终止执行, 这通常表达API的请求数据定义错误, 或者请求数据依赖定义错误, 或者控制流路径错误.
             
+            \item \textbf{请求发送或响应解析失败.} 对API的调用可能会失败, 此时没有响应数据产生. 或者, 响应数据的格式可能无法解析, 此时终止执行. 这通常表达API的行为描述定义错误, 或者API基本设计错误. 
+            
             \item \textbf{响应数据不满足断言}. 当响应数据不在合法响应数据集合内, 或者响应数据不满足断言, 或者无法验证响应数据是否满足断言时, 场景模型也会终止执行. 这通常表达API的响应数据生成错误, 或者响应数据断言的定义错误.
         \end{itemize}
         因此, 只有\textbf{根据终止概率正常终止}对应着测试用例的执行通过, 而其余情形下, 虽然场景模型终止执行, 但却对应着测试用例的执行失败.
         
-    \section{示例}
+    \section{场景模型示例}
         \begin{figure}[!htb]
             \centering
             \includegraphics[width=300pt]{scenario_example.pdf}
@@ -376,12 +381,68 @@ paths:
         
         此场景模型建模的实际使用场景的含义为: 用户首先进行注册($q_2$, "Register"), 注册时自动登录. 登录后, 用户获取微博的动态列表($q_3$, "GetPostList")或者发布新微博($q_5$, "AddPost"), 用户查看了动态列表之后, 可能浏览某一条具体微博($q_4$, "ViewPost")或者发布新微博. 而在浏览具体微博后, 用户可能继续浏览其他微博(以$q_4$上的自环表示)或者有感而发并发布自己的新微博. 发布完微博后, 用户可能会连续再发布一条刷屏(以$q_5$上的自环表示)或者返回查看动态列表寻找其他动态. 再之后, 可能在浏览到某一条微博后用户感到厌倦, 从而选择登出($q_6$, "Logout"). 为了测试登出的效果, 登出后会试图再次获取微博的动态列表($q_7$, "GetPostList"), 此时应该提示要求重新登录, 若是此提示, 整个测试成功, 一次用户会话亦结束. 可以看出, 场景模型在此示例中较细致地对用户使用web服务的行为进行了建模, 并同时兼顾了API组合测试的需求.
     
-    \section{模型构建}
+    \section{场景模型构建}
+        \label{sec:scenario_build}
+    
         构建本文中提出的场景模型有着多种方法.
         
-        首先, 由于场景模型有着严格的形式化定义, 可以很方便地将之脚本化, 因此便可以使用脚本描述测试场景. 为了基于场景模型进行自动化测试, 我们已经定义了一套基于YAML格式的测试场景描述语言, 如图...即节选自一段可在本文工具中直接解析与使用的该描述语言编写的场景脚本. 由于模型本身的简练性, 人工使用场景描述语言编写脚本的工作量并不大.
+        首先, 由于场景模型有着严格的形式化定义, 可以很方便地将之脚本化, 因此便可以使用脚本描述测试场景. 为了基于场景模型进行自动化测试, 我们已经定义了一套基于YAML格式的测试场景描述语言, 如图\ref{fig:scenario_script_eg}即为一段可在本文工具中直接解析与使用的该描述语言编写的场景脚本(有省略), 该场景模型描述了键值对增删服务的一个使用场景, 它的对应有向图表示为图\ref{fig:scenario_script_graph}. 可以看出, 由于模型本身与描述语言的简练性, 简短的脚本便可以描述有一定意义的场景模型.  故人工使用场景描述语言编写脚本的工作量并不大.
         
+        \begin{figure}[!htb]
+            \centering
+            \scriptsize
+            \tt
+            
+            \begin{lstlisting}[language=yaml]
+name: InsertTesting
+description: Testing large scale element insert and delete operations
+nodes:
+  -
+    name: s
+    startWeight: 1.0
+    action: {operationRef: 'root#/paths/\/map\/clear/get'}
+  -
+    name: i
+    repeatTime: 16
+    action: {operationRef: 'root#/paths/\/map\/insert/get'}
+  -
+    name: gs
+    action: {operationRef: 'root#/paths/\/map\/get_size/get'}
+  -
+    name: gk
+    action: {operationRef: 'root#/paths/\/map\/get_keys/get'}
+  -
+    name: d
+    action:
+      operationRef: 'root#/paths/\/map\/delete/get'
+      paramConstraint:
+        key:
+          fromPrevious: {nodeName: gk, seqIndex: -1, rValue: '$response.body#/keys/0'}
+  -
+    name: e
+    endProbability: 1.0
+edges: [{from: s, to: i}, {from: i, to: gs}, {from: gs, to: gk},
+   {from: gk, to: d, condition: '...'}, {from: d, to: gk},
+   {from: gk, to: i, weight: 0.5, condition: '...'},
+   {from: gk, to: e, weight: 0.5, condition: '...'}]
+            \end{lstlisting}
+            
+            \caption{键值对增删服务的一段场景脚本(有省略). 此场景描述了该服务的一个完整场景模型.}
+            \label{fig:scenario_script_eg}
+        \end{figure}
         
+        \begin{figure}[!htb]
+            \centering
+            \includegraphics[width=400pt]{scenario_script_graph.pdf}
+            \caption{键值对增删服务的场景脚本(图\ref{fig:scenario_script_eg})对应的场景模型.}
+            \label{fig:scenario_script_graph}
+        \end{figure}
+        
+        采用绘制与拖拽编辑有向图, 则是更高级方便的场景模型的手工构建方法. 由于场景模型基于自动机模型而扩展, 故类似于自动机, 带有注解的有向图仍是其有效的表示方式. 使用交互式的GUI, 用户可以直接对有向图以拖拽和绘制方式直观地进行编辑, 进一步提高场景模型的设计与构建效率. 目前, 有向图编辑的GUI在web端和桌面端均不难实现, 很多前端库Qunee\footnote{qunee.com}, State.js\footnote{https://github.com/steelbreeze/state.js}均提供了此功能, 本文的LapisGUI编辑工具亦基于PyQt提供了此功能.
+        
+        场景模型的构建亦可以进行一定程度的自动化. 在描述API的行为与要素的OpenAPI语言中, 存在一个名为\texttt{links}的域用来描述当前API与其他API在设计环节的关联, 这里的关联仅描述后继执行的API. 它不仅可以指定后继API的名称, 还可以指定数据流的依赖和传递关系, 如后继的各请求参数分别如何复用当前API的请求数据或响应数据. 一个API可以指定多个关联. 依靠API脚本中的这类关联元素, 可以非常容易地挖掘出包含数据流依赖的频繁调用序列. 更进一步地, 正如\ref{sec:research_status}小节所述, 在数据挖掘与代码分析领域, \inlinecite{fowkes2016parameter}, \inlinecite{taox06}, \inlinecite{Zhong2009}等工具已经提出了较为完善的API频繁调用序列的自动化挖掘方法. 近年来, 随着基于神经网络的深度学习方法的发展与运用, 从自然语言的文档描述中学习API用法和调用序列成为了一个很具有可行性的学习任务, \inlinecite{xiaodongg16}工作即为一个典型示例, 此学习任务的结果输出也是API的调用序列. 这些使用全自动化方法获得的调用序列均可以有效辅助场景构建, 提高构建场景的效率.
+        
+        场景模型构建还可以进一步自动化. 在基础算法方面, \inlinecite{anand97}工作在很早之前即提出了从序列分布中学习概率有限状态自动机的快速算法. 由于本文的场景模型即基于此自动机, 进行一定的扩展, 则从调用序列的分布中全自动学习出场景模型也很可能具有可行性. 主要的扩展工作应该在于保证调用序列的完备或处理调用序列不完备的情况, 以及数据依赖, 约束与断言的挖掘与学习. 这是值得进一步讨论的未来研究方向.
         
     \section{对比}
         目前, 对于web API, 亦有其他场景建模与自动化测试法. 本小节将本文提出的场景模型与学术界相关工作、和工业界仍普遍采用的手工脚本模型, 从表达控制流能力、表达数据流能力以及测试用例多样性方面, 进行了简要对比.
@@ -390,7 +451,7 @@ paths:
         \begin{itemize}
             \item 概率转移图\cite{junyiw17}: 此模型使用定义了起始节点和终止节点集合的有向概率图表达使用场景. 在图上进行遍历, 并根据出边的权值概率性地选择下一节点, 重复此过程, 便可以自动化地生成测试用例.
             
-            \item 请求序列: 在代码分析和数据挖掘领域, 常使用请求序列对API使用场景建模. 如文献\cite{taox06}\cite{xiaodongg16}中, 就使用代码静态分析和数据挖掘方法, 从开源仓库中获得API请求序列的频繁模式. 这种请求序列可以使用标准化格式编码, 然后导入既有API测试工具进行自动化测试, 如Swagger Inspector\cite{swaggerinspetor17}.
+            \item 请求序列: 在代码分析和数据挖掘领域, 常使用请求序列对API使用场景建模. 如文献\inlinecite{taox06}\inlinecite{xiaodongg16}中, 就使用代码静态分析和数据挖掘方法, 从开源仓库中获得API请求序列的频繁模式. 这种请求序列可以使用标准化格式编码, 然后导入既有API测试工具进行自动化测试, 如Swagger Inspector\cite{swaggerinspetor17}.
             
             \item 测试脚本: 在工业界, 最常见的测试方式仍然是使用测试人员手工编写的测试脚本. 这里可以将测试脚本视为场景模型的一种描述.
         \end{itemize}
