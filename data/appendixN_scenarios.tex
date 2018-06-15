@@ -6,30 +6,34 @@
     
     \section{OSS服务测试场景模型}
         OSS服务(云对象存储服务)的场景模型共有3个, 分别为Scenario A(图\ref{fig:oss_scenario_A}), Scenario B(图\ref{fig:oss_scenario_B})和Scenario C(图\ref{fig:oss_scenario_C}).
+
+        状态S为这些场景的确定性初始状态, 状态T为这些场景的确定性终止状态. 在图中, 绿色表达式表示状态关联的请求数据依赖; 蓝色表达式表示状态转移的条件; 红色文字表示响应数据断言; 紫色文字为其它控制流说明.
         
         \begin{figure}[!htb]
             \centering
-            \includegraphics[width=400pt]{scenarioOSS_A.pdf}
+            \includegraphics[width=400pt]{scenarioOSS_A_new.pdf}
             \caption[]{OSS(云对象存储服务) Scenario A.}
             \label{fig:oss_scenario_A}
         \end{figure}
         
          \begin{figure}[!htb]
             \centering
-            \includegraphics[width=400pt]{scenarioOSS_B.pdf}
+            \includegraphics[width=400pt]{scenarioOSS_B_new.pdf}
             \caption[]{OSS(云对象存储服务) Scenario B.}
             \label{fig:oss_scenario_B}
         \end{figure}
         
          \begin{figure}[!htb]
             \centering
-            \includegraphics[width=400pt]{scenarioOSS_C.pdf}
+            \includegraphics[width=450pt]{scenarioOSS_C_new.pdf}
             \caption[]{OSS(云对象存储服务) Scenario C.}
             \label{fig:oss_scenario_C}
         \end{figure}
     
     \section{ECS服务测试场景模型}
-        ECS服务(云服务器服务)的场景模型仅一个, 见图\ref{fig:ecs_scenario}.
+        ECS服务(云服务器服务)的场景模型仅一个, 见图\ref{fig:ecs_scenario}. 
+
+        状态Start为确定性初始状态, 状态T为确定性终止状态. 在图中, 请求数据依赖在状态关联的方框中写出; 状态转移的条件则标在转移边上, 其中方括号"$\left[\right]$"中的数字表示该转移的响应状态码条件; 该场景无响应数据断言.
         
         \begin{figure}[!htb]
             \centering
@@ -45,7 +49,7 @@
         
         \begin{figure}[!htb]
             \centering
-            \includegraphics[width=400pt]{scenario_E-payment_pattern.pdf}
+            \includegraphics[width=400pt]{scenario_E-payment_pattern_new.pdf}
             \caption[]{E-payment的场景模型示意图. 该场景被设计为链式, 专用于分区测试数据的合成.}
             \label{fig:epayment_scenario}
         \end{figure}
