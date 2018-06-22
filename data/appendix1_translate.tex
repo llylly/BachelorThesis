@@ -12,7 +12,7 @@
 
 
 \section{引言}
-在企业体系中, 面向服务的架构(SOA), 特别是微服务架构\citeappena{newman2015building}, 已成为常规实践. SOA服务的市场规模在2013年已经达到了57亿美元, 这个市场的巨头有IBM, 微软, 甲骨文和SAP等公司. 预计至2020年\footnote{http://www.radiantinsights.com/research/services-oriented-architecture-soa}, 市场规模将达160亿美元. 目前, REST\citeappena{fielding2000architectural}是在企业体系中开发web服务的最常用方式. 
+在企业体系中, 面向服务的架构(SOA), 特别是微服务架构\citeappena{newman2015building}, 已成为常规实践. SOA服务的市场规模在2013年已经达到了57亿美元, 这个市场的巨头有IBM, 微软, 甲骨文和SAP等公司. 预计至2020年\footnote{http://www.radiantinsights.com/research/services-oriented-architecture-soa}, 市场规模将达160亿美元. 目前, REST\citeappena{fielding2000architecturalappendix}是在企业体系中开发web服务的最常用方式. 
 
 不仅在许多企业体系内部, 在互联网上,也有许多RESTful web服务. 如ProgrammableWeb\footnote{https://www.programmableweb.com/api-research}, 在互联网平台上, 目前已有超过16,000项Web API. 在Java生态系统中, 根据对1,700名工程师的调查\footnote{http://www.infoworld.com/article/3153148/java/oracle-survey-java-ee-
 users-want-rest-http2.html}, 对REST的更好支持(与HTTP/2支持一同)是在下一代Java企业版(当时为JEE8)中最期待的特性. 根据那项调查, 这是因为“当前Java中的云开发实践在很大程度上基于REST和异步”. 
@@ -74,7 +74,7 @@ users-want-rest-http2.html}, 对REST的更好支持(与HTTP/2支持一同)是在
     \subsection{REST}
       多年以来, 编写web服务的主要方式是使用SOAP(简单对象访问协议), 这是一个使用XML包装信息的通信协议. 然而, 近年来, 在开发web服务时, 工业界有明显的向REST(表现层状态转移)过渡的趋势. 许多巨头已在使用REST, 如Google\footnote{https://developers.google.com/drive/v2/reference/}, Amazon\footnote{ http://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html}, Twitter\footnote{https://dev.twitter.com/rest/public}, Reddit\footnote{https://www.reddit.com/dev/api/}, LinkedIn\footnote{https://developer.linkedin.com/docs/rest-api}等等. 
 
-    REST的概念首先由一篇有很大影响力(目前引用量近6000)的2000年的博士论文\citeappena{fielding2000architectural}引入. REST不是一个协议(如SOAP那样), 而是一系列在HTTP上设计web服务的架构上的指南. 这种客户端 - 服务器应用需要满足一些约束, 才能被认为是RESTful的, 比如无状态; 资源需被明确指明是否可缓存; 资源需能用URI指定; 由客户端发送的资源表示(JSON或XML)需与资源的实际格式(如关系型数据库的一行)保持独立; 资源需通过合适的HTTP方法管理与组织, 比如某个资源应该由DELETE请求来删除而不是POST请求; 等等.
+    REST的概念首先由一篇有很大影响力(目前引用量近6000)的2000年的博士论文\citeappena{fielding2000architecturalappendix}引入. REST不是一个协议(如SOAP那样), 而是一系列在HTTP上设计web服务的架构上的指南. 这种客户端 - 服务器应用需要满足一些约束, 才能被认为是RESTful的, 比如无状态; 资源需被明确指明是否可缓存; 资源需能用URI指定; 由客户端发送的资源表示(JSON或XML)需与资源的实际格式(如关系型数据库的一行)保持独立; 资源需通过合适的HTTP方法管理与组织, 比如某个资源应该由DELETE请求来删除而不是POST请求; 等等.
         
         让我们考虑一个RESTful web服务的例子, 它让我们操作一个产品名录. 这些是可能的操作: 
         \begin{itemize}
@@ -89,7 +89,7 @@ users-want-rest-http2.html}, 对REST的更好支持(与HTTP/2支持一同)是在
         
         REST的另一个特性是所谓的HATEOAS(超媒体即是应用状态引擎), 即每个资源表示也应该提供往其它资源的链接(与网页的链接类似). 举个例子, 当请求\textit{GET /products}时, 不仅仅是所有产品列表应被返回, 还应有到其它可用请求方法的链接. 理想情形下, 给出API的一个主入口, 整个这个API应该能通过这些链接完全发掘到. 然而, HATEOS在实践中很少使用\citeappena{rodriguez2016rest}, 这主要是因为缺乏定义链接格式的合适规范(如JSON或XML模式), 并且这会给客户端带来额外的负担. 
         
-        注意: REST不是协议, 而只是架构指南的集合\citeappena{fielding2000architectural}, 名词”REST“十分常见, 但在实践中常被误用. 虽然许多HTTP上的Web API严格上讲并不能被认为是完全REST的\citeappena{rodriguez2016rest}\citeappena{fielding2000architectural}, 但它们使用REST的冠名与宣传. 虽然在本论文中我们使用术语REST, 但提出的新技术可以用于任何通过HTTP端点访问, 并且载荷数据用类似JSON或XML的语言描述的web API. 
+        注意: REST不是协议, 而只是架构指南的集合\citeappena{fielding2000architecturalappendix}, 名词”REST“十分常见, 但在实践中常被误用. 虽然许多HTTP上的Web API严格上讲并不能被认为是完全REST的\citeappena{rodriguez2016rest}\citeappena{fielding2000architecturalappendix}, 但它们使用REST的冠名与宣传. 虽然在本论文中我们使用术语REST, 但提出的新技术可以用于任何通过HTTP端点访问, 并且载荷数据用类似JSON或XML的语言描述的web API. 
     
     \subsection{基于搜索的软件测试}
     由于软件可以十分复杂, 测试数据生成是一项复杂的任务. 而且, 很多开发者都感觉编写测试用例枯燥乏味. 因此, 有许多相关研究旨在实现自动化生成高质量测试用例. 其中一个最简单的方法是随机生成测试用例\citeappena{arcuri2012random}. 虽然在一些场景中随机可能是很有效的, 但这可能仅仅只能覆盖被测软件的一小部分. 比如, 由于一个随机生成的字符串几乎不可能构成一个有效且符合格式的HTTP消息, 在RESTful API上使用裸随机测试策略是没有多少意义的. 
@@ -322,7 +322,7 @@ public Response downloadFile(
     @ApiParam(value = "" +
       "The maximum width/height of returned images. " + 
       "The specified value will be rounded up to the " + 
-      "next ’power of 2’, e.g. 256, 512, 1024 and so on.")
+      "next 'power of 2', e.g. 256, 512, 1024 and so on.")
     @QueryParam("size") int size)
     {
     MediaFile mediaFile = dao.read(id); 
@@ -642,6 +642,16 @@ public void test0() throws Exception {
 \section*{致谢}
   我们想感谢Andreas BiØrn-Hansen, 他提出了宝贵的反馈意见; 还想感谢我们的工业界合作伙伴, 他们提供了其中一个RESTful服务. 这项工作由卢森堡国家研究基金资助(FNR/P10/03). 
 
+
+%% 参考文献
+% 注意：至少需要引用一篇参考文献，否则下面两行可能引起编译错误。
+% 如果不需要参考文献，请将下面两行删除或注释掉。
+% 数字式引用
+\bibliographystyleappena{thuthesis-numeric}
+% 作者-年份式引用
+% \bibliographystyle{thuthesis-author-year}
+\bibliographyappena{ref/appendix1bib}
+
 \title{书面翻译对应的原文索引}
 
   \begin{itemize}
@@ -652,13 +662,4 @@ public void test0() throws Exception {
     IEEE, 2017: 9-20. 
     DOI 10.1109/QRS.2017.11
   \end{itemize}
-
-%% 参考文献
-% 注意：至少需要引用一篇参考文献，否则下面两行可能引起编译错误。
-% 如果不需要参考文献，请将下面两行删除或注释掉。
-% 数字式引用
-\bibliographystyleappena{thuthesis-numeric}
-% 作者-年份式引用
-% \bibliographystyle{thuthesis-author-year}
-\bibliographyappena{ref/refs,ref/appendix1bib}
 

@@ -106,7 +106,7 @@ paths:
         default: {$ref: '#/components/responses/error'}
                 \end{lstlisting}
             
-            \caption{OpenAPI脚本示例. 该脚本定义了对象存储服务的一个名为\texttt{GetService}的API. 此API无请求参数, 响应体根据响应状态码的不同而有不同格式, 分为200和异常状态码两种情形, 响应体亦定义了数据对象与其XML表示的对应关系.}
+            \caption[OpenAPI脚本示例]{OpenAPI脚本示例. 该脚本定义了对象存储服务的一个名为\texttt{GetService}的API. 此API无请求参数, 响应体根据响应状态码的不同而有不同格式, 分为200和异常状态码两种情形, 响应体亦定义了数据对象与其XML表示的对应关系.}
             \label{fig:openapi_example}
         \end{figure}
         
@@ -124,7 +124,7 @@ paths:
             \label{def.pfsa}
             概率有限状态自动机为一个元组
             \begin{equation}
-                \mathcal{B} := <Q_{\mathcal{B}}, \Sigma, \sigma_{\mathcal{B}}, I_{\mathcal{B}}, F_{\mathcal{B}}, P_{\mathcal{B}}>,
+                \mathcal{B} := \langle Q_{\mathcal{B}}, \Sigma, \sigma_{\mathcal{B}}, I_{\mathcal{B}}, F_{\mathcal{B}}, P_{\mathcal{B}} \rangle,
             \end{equation}
             
             其中:
@@ -172,7 +172,7 @@ paths:
         \begin{figure}[!htb]
             \centering
             \includegraphics[width=400pt]{PFSA_example.pdf}
-            \caption{概率有限状态自动机示例. 以有向图的形式可视化表示.}
+            \caption[概率有限状态自动机示例]{概率有限状态自动机示例. 以有向图的形式可视化表示.}
             \label{fig:PFSA_example}
         \end{figure}
         
@@ -239,7 +239,7 @@ paths:
             场景模型是一个元组
             \begin{equation}
                 \label{eq:scenario_model}
-                 \mathcal{A} := <Q_{\mathcal{A}}, \Sigma, \sigma_{\mathcal{A}}, I_{\mathcal{A}}, F_{\mathcal{A}}, P_{\mathcal{A}}>,
+                 \mathcal{A} := \langle Q_{\mathcal{A}}, \Sigma, \sigma_{\mathcal{A}}, I_{\mathcal{A}}, F_{\mathcal{A}}, P_{\mathcal{A}} \rangle,
             \end{equation}
             
             其中:
@@ -271,7 +271,7 @@ paths:
             状态$q \in Q_{\mathcal{A}}$的定义是一个元组
             \begin{equation}
                 \label{eq:scenario_model_state}
-                q := <t_q, in_q, out_q, d_q, a_q>,
+                q := \langle t_q, in_q, out_q, d_q, a_q \rangle,
             \end{equation}
             其中:
             \begin{itemize}
@@ -294,7 +294,7 @@ paths:
             在状态$q$的定义中, 每一项请求数据依赖$d \in d_q$都是一个元组
             \begin{equation}
                 \label{eq:scenario_request_depen}
-                d := <q_d, index_d, f_d>,
+                d := \langle q_d, index_d, f_d\rangle,
             \end{equation}
             它的各项含义为:
             \begin{itemize}
@@ -307,7 +307,7 @@ paths:
             
             在状态$q$的定义中, 每一项响应数据的断言$a \in a_q$也是一个元组
             \begin{equation}
-                a := <q_a, index_a, f_a>,
+                a := \langle q_a, index_a, f_a\rangle,
             \end{equation}
             它的各项含义为:
             \begin{itemize}
@@ -334,7 +334,7 @@ paths:
         
         服务场景名称$t_q$指定当前状态明确关联的API服务端点, 也包括请求方式, URL等调用必需的信息, $t_q$也可以为空, 表示不与任何API服务端点关联, 经过此状态时, 也就不会进行API调用. $in_q$是合法请求数据的集合, 它可以从OpenAPI描述脚本的请求数据模式定义部分引入, 也可以使用新定义覆盖. $out_q$是合法响应数据的集合, 类似$in_q$, 它也可以从OpenAPI引入, 或用新定义覆盖.
         
-        $d_q$为请求数据依赖集合, 它的每个元素为一项输入数据依赖$d := <q_d, index_d, f_d >$, 依赖表达了由上下文对当前状态的请求数据赋予的额外约束. 其具体含义为: 模型工作的同时记录下当前的状态序列, 然后保序提取出属于$q_d$的状态, 找出其中的第$index_d$项状态, 下标$index_d$从0开始, 负数表示倒数第$|index_d|$项状态. 此时, $(q_d, index_d)$指向了当前状态序列中某一个确定状态$now$. 然后, 提取出该状态执行时的请求数据(即输入, 记为$i_{now}$)与响应数据(即输出, 记为$o_{now}$), 再应用到函数$f_d$, 得到的$f_d(i_{now}, o_{now})$定义了当前状态(更严格的)合法请求数据(即输入数据)集合. 可以看出, 合法输入数据的集合由当前执行状态序列中之前的输入输出决定. $a_q$为响应数据断言集合, 它的每个元素为一项响应数据断言$a := <q_a, index_a, f_a>$, 其具体含义与输入数据依赖相类似, $f_a(i_{now}, o_{now})$定义的是当前状态(更严格的)合法响应(即输出数据)集合.
+        $d_q$为请求数据依赖集合, 它的每个元素为一项输入数据依赖$d := \langle q_d, index_d, f_d \rangle$, 依赖表达了由上下文对当前状态的请求数据赋予的额外约束. 其具体含义为: 模型工作的同时记录下当前的状态序列, 然后保序提取出属于$q_d$的状态, 找出其中的第$index_d$项状态, 下标$index_d$从0开始, 负数表示倒数第$|index_d|$项状态. 此时, $(q_d, index_d)$指向了当前状态序列中某一个确定状态$now$. 然后, 提取出该状态执行时的请求数据(即输入, 记为$i_{now}$)与响应数据(即输出, 记为$o_{now}$), 再应用到函数$f_d$, 得到的$f_d(i_{now}, o_{now})$定义了当前状态(更严格的)合法请求数据(即输入数据)集合. 可以看出, 合法输入数据的集合由当前执行状态序列中之前的输入输出决定. $a_q$为响应数据断言集合, 它的每个元素为一项响应数据断言$a := \langle q_a, index_a, f_a\rangle$, 其具体含义与输入数据依赖相类似, $f_a(i_{now}, o_{now})$定义的是当前状态(更严格的)合法响应(即输出数据)集合.
         
         $f_d$和$f_a$函数虽然取上下文中之前的输入和输出数据作为参数, 但也可以不依赖于这两项, 此时, 则相当于直接对当前状态定义额外的合法请求数据集合和合法响应数据集合, 作用与$in_q$和$out_q$相似. 不过, 在具体实现时, $in_q$和$out_q$既可以由API行为描述文档引入, 也可以在场景模型中重写, 而$f_d$和$f_a$则只能定义在场景模型描述脚本内.
         
@@ -356,7 +356,7 @@ paths:
         \begin{figure}[!htb]
             \centering
             \includegraphics[width=300pt]{scenario_example.pdf}
-            \caption{一个场景模型的实例. 请求数据依赖为: \\
+            \caption[一个场景模型的实例]{一个场景模型的实例. 请求数据依赖为: \\
             $q_3$.\texttt{request.username} = $q_2$.\texttt{request.username};\\
             $q_3$.\texttt{request.ssid} = $q_2$.\texttt{response.ssid};\\
             $q_4$.\texttt{request.username} = $q_2$.\texttt{request.username};\\
@@ -375,7 +375,7 @@ paths:
         
         除了图上的部分, 场景还包括请求数据的依赖与响应数据的断言部分, 在此场景示例中, 仅有请求数据的依赖, 响应数据断言则依靠转移条件表达. 这部分在图\ref{fig:scenario_example}的文字部分以谓词表达式的形式具体列出. 如$q_3$\texttt{.request.username} = $q_2$\texttt{.request.username}表达的数据依赖为
         \begin{equation}
-            d_{q_3} := <q_2, -1, f(in, out) = \left\{username: in.username;\dots\right\}>.
+            d_{q_3} := \langle q_2, -1, f(in, out) = \left\{username: in.username;\dots\right\}\rangle.
         \end{equation}
         其含义为, 在$q_3$中, 请求数据的$username$域的值为最近一次到达$q_2$时, 其请求数据的$username$域. 即调用获取动态列表API时, 用户名参数应与之前注册时的用户名相同. 其他各数据依赖项的解读方式类似. 可见, 请求数据依赖信息的加入明显提升了模型表达能力.
         
@@ -427,14 +427,14 @@ edges: [{from: s, to: i}, {from: i, to: gs}, {from: gs, to: gk},
    {from: gk, to: e, weight: 0.5, condition: '...'}]
             \end{lstlisting}
             
-            \caption{键值对增删服务的一段场景脚本(有省略). 此场景描述了该服务的一个完整场景模型.}
+            \caption[键值对增删服务的一段场景脚本]{键值对增删服务的一段场景脚本(有省略). 此场景描述了该服务的一个完整场景模型.}
             \label{fig:scenario_script_eg}
         \end{figure}
         
         \begin{figure}[!htb]
             \centering
-            \includegraphics[width=400pt]{scenario_script_graph.pdf}
-            \caption{键值对增删服务的场景脚本(图\ref{fig:scenario_script_eg})对应的场景模型.}
+            \includegraphics[width=250pt]{scenario_script_graph.pdf}
+            \caption[键值对增删服务的场景脚本对应的场景模型]{键值对增删服务的场景脚本(图\ref{fig:scenario_script_eg})对应的场景模型.}
             \label{fig:scenario_script_graph}
         \end{figure}
         
@@ -475,7 +475,7 @@ edges: [{from: s, to: i}, {from: i, to: gs}, {from: gs, to: gk},
                 & 构建 & 编程自定义 & 编程自定义 & 一般不具备 \\
                 \bottomrule
             \end{tabular}
-            \caption{本文场景模型与其他常用测试场景模型的对比.}
+            \caption[本文场景模型与其他常用场景模型对比表]{本文场景模型与其他常用测试场景模型的对比.}
             \label{tab:related_work_compare}
         \end{table}
         

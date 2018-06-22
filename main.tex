@@ -68,7 +68,7 @@
 \usepackage[]{algorithm2e}
 \usepackage[colorinlistoftodos]{todonotes}
 \usepackage[resetlabels]{multibib}
-\newcites{appena}{附录A参考文献}
+\newcites{appena}{参考文献}
 
 \usepackage{caption}
 
@@ -122,8 +122,10 @@
 % 数字式引用
 \bibliographystyle{thuthesis-numeric}
 % 作者-年份式引用
+\newpage
+\addcontentsline{toc}{chapter}{参考文献}
 % \bibliographystyle{thuthesis-author-year}
-\bibliography{ref/refs,ref/appendix1bib}
+\bibliography{ref/refs}
 
 %% 致谢
 \include{data/ack}
@@ -133,9 +135,9 @@
 
 	\input{data/appendix1_translate}
 
-    \input{data/appendixN_scenarios}
+    % \input{data/appendixN_scenarios}
     
-    \input{data/appendixN_partitiondeduction}
+    % \input{data/appendixN_partitiondeduction}
 
 \end{appendix}
 
@@ -144,5 +146,5 @@
 
 %% 本科生进行格式审查是需要下面这个表格，答辩可能不需要。选择性留下。
 % 综合论文训练记录表
-% \includepdf[pages=-]{scan-record.pdf}
+\includepdf[pages=-]{scan-record.pdf}
 \end{document}

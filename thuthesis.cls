@@ -254,7 +254,7 @@
   autoindent=true}
 \setlist{nosep}
 \def\thu@textcircled#1{%
-  \ifnum\value{#1} >9
+  \ifnum\value{#1} >999
     \ClassError{thuthesis}%
       {Too many footnotes in this page.}{Keep footnote less than 10.}
   \fi
@@ -862,7 +862,10 @@
 \DeclareRobustCommand\inlinecite{\@inlinecite}
 \def\@inlinecite#1{\begingroup\let\@cite\NAT@citenum\citep{#1}\endgroup}
 \let\onlinecite\inlinecite
-\renewcommand\bibsection{\thu@chapter*{\bibname}}
+% \renewcommand\bibsection{\thu@chapter*{\bibname}}
+% llylly change: hide reference lists in contents
+% \renewcommand{\bibsection}{}
+
 \renewcommand\bibfont{\ifthu@bachelor\wuhao[1.619]\else\wuhao[1.5]\fi}
 \setlength\bibhang{2\ccwd}
 \addtolength{\bibsep}{-0.7em}

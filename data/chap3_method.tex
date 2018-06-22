@@ -33,7 +33,7 @@
                 状态转移条件 & & & 可用 & 可用 \\
                 \bottomrule
             \end{tabular}
-            \caption{各数据定义的可用表达方式列表.}
+            \caption[各数据定义的可用表达方式表]{各数据定义的可用表达方式列表.}
             \label{tab:data_def_format}
         \end{table}
         
@@ -66,7 +66,7 @@
 }
             \end{lstlisting}
             
-            \caption{JSON模式示例.}
+            \caption[JSON模式示例]{JSON模式示例.}
             \label{fig:json_schema_example}
         \end{figure}
         
@@ -137,7 +137,7 @@
                 object & / & 递归生成各成员 \\
                 \bottomrule
             \end{tabular}
-            \caption{从JSON模式生成请求数据. 依据基本类型和条件分类讨论, 采取不同策略.}
+            \caption[JSON模式数据定义的生成策略表.]{JSON模式数据定义的生成策略表. 从JSON模式生成请求数据时, 依据基本类型和条件分类讨论, 采取不同策略.}
             \label{tab:schemagen}
         \end{table}
     
@@ -163,11 +163,11 @@
           	
             \KwIn{$Spec$, $\mathcal{A}$} 
             \tcp{输入: API定义脚本和场景模型脚本}
-            \tcp{场景模型$\mathcal{A} := <Q_{\mathcal{A}}, \Sigma, \sigma_{\mathcal{A}}, I_{\mathcal{A}}, F_{\mathcal{A}}, P_{\mathcal{A}}>$}
+            \tcp{场景模型$\mathcal{A} := \langle Q_{\mathcal{A}}, \Sigma, \sigma_{\mathcal{A}}, I_{\mathcal{A}}, F_{\mathcal{A}}, P_{\mathcal{A}}\rangle$}
             \KwOut{$r$, $T$}
             \tcp{输出: 执行序列和终止原因}
             $q$ $\gets$ RandomChoice($Q_{\mathcal{A}}$, $I_{\mathcal{A}}$)\;
-            \tcp{根据初始状态概率分布函数随机初始状态$q := <t_q, in_q, out_q, d_q, a_q>$}
+            \tcp{根据初始状态概率分布函数随机初始状态$q := \langle t_q, in_q, out_q, d_q, a_q\rangle$}
             $current$ $\gets$ $EmptyMap$\;
             $current.state$ $\gets$ $q$\;
             $r$ $\gets$ $EmptyList$\;
@@ -179,7 +179,7 @@
                 	\ForEach(\tcp*[h]{遍历处理所有请求参数}) {$param$ in $t_q.params$} {
                     	\If(\tcp*[h]{当前参数$param$有数据依赖, 则从依赖生成请求数据}) {$d_q.param \neq Null$} {
                         	$d$ $\gets$ $d_q.param$\;
-                            \tcp{数据依赖$d := <q_d, index_d, f_d>$}
+                            \tcp{数据依赖$d := \langle q_d, index_d, f_d\rangle$}
                             $q'$ $\gets$ PickDependee($r$, $q_d$, $index_d$)\;
                             $i.param$ $\gets$ RandomFromSet($f_d(i_{q'}, o_{q'})$)\;
                         } \Else(\tcp*[h]{当前参数$param$无数据依赖, 则默认从合法请求集合中生成请求数据}) {
@@ -197,7 +197,7 @@
                     	\ForEach(\tcp*[h]{遍历返回的响应的各个域}) {$field$ in $t_q.fields$} {
                         	\If(\tcp*[h]{响应的$field$域有断言定义, 则验证是否满足断言}) {$a_q.field \neq Null$} {
                             	$a$ $\gets$ $a_q.field$\;
-                                \tcp{响应断言$a := <q_a, index_a, f_a>$}
+                                \tcp{响应断言$a := \langle q_a, index_a, f_a\rangle$}
                                 $q'$ $\gets$ PickDependee($r$, $q_a$, $index_a$)\;
                                 \If {$o.field \notin f_a(i_{q'}, o_{q'})$} {
                                 	$T$ $\gets$ ``Response Assert Fail''\;
@@ -269,24 +269,101 @@
         依靠实现的工具, 本文在三个实际的web API服务上进行了实验, 从四个方面评估了测试自动生成方法: 测试用例多样性, 测试覆盖率, 故障检测能力, 以及测试效率.
     
         \subsection{实验配置}
-            实验选择的第一个被测系统为合作研究组正在开发的云对象存储服务(OSS)系统(版本1.0)(后文简称\textbf{OSS}). 此服务提供了33个web API接口, 并有较完整的使用文档. 测试时, 期望所有的API和功能点均业已实现完成.
+            \subsubsection*{云对象存储服务(OSS)}
+                实验选择的第一个被测系统为合作研究组正在开发的云对象存储服务(OSS)系统(版本1.0)(后文简称\textbf{OSS}). 此服务提供了33个web API接口, 并有较完整的使用文档. 测试时, 期望所有的API和功能点均业已实现完成.
+                
+                最近以来, 云对象存储服务(OSS)已经成为了流行的云存储服务形式. 许多大型云服务提供商均已提供云对象存储服务, 如亚马逊AWS\footnote{https://aws.amazon.com/s3}, IBM云\footnote{ https://console.bluemix.net/catalog/services/cloud-object-storage}和阿里云\footnote{ https://www.alibabacloud.com/product/oss}等. 在云对象存储服务中, 每个账号, 在每个服务器区域, 都可以有许多存储空间(bucket). 存储空间(bucket)与文件系统中的文件夹类似, 对象(object)与文件系统中的文件类似. 用户可以上传对象, 删除对象, 重命名对象, 创建符号链接等等. 每个对象都属于一个固定的存储空间.
+                
+                对于云对象存储服务, 本工作首先为这33个API编写了OpenAPI格式的API行为描述脚本. 然后, 设计了一些小型场景模型来检验每个API的基本功能. 在此之后, 设计了三个较大型的综合场景模型Scenario A、Scenario B、Scenario C以进行综合测试, 这三个场景均与实际使用场景较相似, 测试用例的生成与执行期望能够模拟实际部署后的高负载环境. 对于每个场景, 运行实现的工具随机生成并执行了1,000个测试用例. 所有3,000个测试用例的执行与生成共耗时约4h, 这些用例及其执行结果都被妥善保存. 后续分析时, 在所有测试用例上进行统计, 未进行任何遴选.
+
+                三个综合场景模型的直观表示详见图\ref{fig:oss_scenario_A}, 图\ref{fig:oss_scenario_B}和图\ref{fig:oss_scenario_C}. 状态S为这些场景的确定性初始状态, 状态T为这些场景的确定性终止状态. 在这三幅图中, 绿色表达式表示状态关联的请求数据依赖; 蓝色表达式表示状态转移的条件; 红色文字表示响应数据断言; 紫色文字为其它控制流说明.
+
+                \begin{figure}
+                    \centering
+                    \includegraphics[width=400pt]{scenarioOSS_A_new.pdf}
+                    \caption[云对象存储服务Scenario A]{OSS(云对象存储服务) Scenario A模型的直观表示.}
+                    \label{fig:oss_scenario_A}
+                \end{figure}
+                
+                 \begin{figure}
+                    \centering
+                    \includegraphics[width=400pt]{scenarioOSS_B_new.pdf}
+                    \caption[云对象存储服务Scenario B]{OSS(云对象存储服务) Scenario B模型的直观表示.}
+                    \label{fig:oss_scenario_B}
+                \end{figure}
+                
+                 \begin{figure}
+                    \centering
+                    \includegraphics[width=450pt]{scenarioOSS_C_new.pdf}
+                    \caption[云对象存储服务Scenario C]{OSS(云对象存储服务) Scenario C模型的直观表示.}
+                    \label{fig:oss_scenario_C}
+                \end{figure}
             
-            最近以来, 云对象存储服务(OSS)已经成为了流行的云存储服务形式. 许多大型云服务提供商均已提供云对象存储服务, 如亚马逊AWS\footnote{https://aws.amazon.com/s3}, IBM云\footnote{ https://console.bluemix.net/catalog/services/cloud-object-storage}和阿里云\footnote{ https://www.alibabacloud.com/product/oss}等. 在云对象存储服务中, 每个账号, 在每个服务器区域, 都可以有许多存储空间(bucket). 存储空间(bucket)与文件系统中的文件夹类似, 对象(object)与文件系统中的文件类似. 用户可以上传对象, 删除对象, 重命名对象, 创建符号链接等等. 每个对象都属于一个固定的存储空间.
+            \subsubsection*{云服务器服务(ECS)}
+                第二个被测系统为某知名商业云计算提供商的云服务器(ECS)服务(后文简称\textbf{ECS}), 诸多大型应用均依托此提供商提供计算支持. 
+                
+                本实验测试它为普通用户提供的云计算实例租用服务, 相关接口共有26个, 均为web API, 并配有详细用户使用文档. 在此服务中, 用户可以租用实例, 退租实例, 获取实例运行状态, 启动实例, 关闭实例, 重启实例等等. 我们选择了其中8个web API, 编写了行为描述脚本, 然后设计了包含所有这8个web API的综合场景模型进行测试. 一共随机生成并执行了100个测试用例, 所有测试用例在进行统计与分析时均纳入考虑.
+
+                综合场景模型的直观表示见图\ref{fig:ecs_scenario}. 在综合场景模型中, 状态Start为确定性初始状态, 状态T为确定性终止状态. 在图中, 请求数据依赖在状态关联的方框中写出; 状态转移的条件则标在转移边上, 其中方括号"$\left[\right]$"中的数字表示该转移的响应状态码条件; 该场景无响应数据断言.
+        
+                \begin{figure}[!htb]
+                    \centering
+                    \includegraphics[width=400pt]{scenarioECS.pdf}
+                    \caption[云服务器服务综合场景模型]{ECS(云服务器服务)的综合场景模型的直观表示.}
+                    \label{fig:ecs_scenario}
+                \end{figure}
             
-            对于云对象存储服务, 本工作首先为这33个API编写了OpenAPI格式的API行为描述脚本. 然后, 设计了一些小型场景模型来检验每个API的基本功能. 在此之后, 设计了三个较大型的综合场景模型Scenario A(详见附录图\ref{fig:oss_scenario_A})、Scenario B(详见附录图\ref{fig:oss_scenario_B})、Scenario C(详见附录图\ref{fig:oss_scenario_C})以进行综合测试, 这三个场景均与实际使用场景较相似, 测试用例的生成与执行期望能够模拟实际部署后的高负载环境. 对于每个场景, 运行工具原型随机生成并执行了1,000个测试用例. 所有测试用例及其执行结果都被妥善保存. 后续分析时, 在所有测试用例上进行统计, 未进行任何遴选.
-            
-            第二个被测系统为某知名商业云计算提供商的云服务器(ECS)服务(后文简称\textbf{ECS}), 诸多大型应用均依托此提供商提供计算支持. 
-            
-            本实验测试它为普通用户提供的云计算实例租用服务, 相关接口共有26个, 均为web API, 并配有详细用户使用文档. 在此服务中, 用户可以租用实例, 退租实例, 获取实例运行状态, 启动实例, 关闭实例, 重启实例等等. 我们选择了其中8个web API, 编写了行为描述脚本, 然后设计了包含所有这8个web API的综合场景模型(详见附录图\ref{fig:ecs_scenario})进行测试. 一共随机生成并执行了100个测试用例, 所有测试用例在进行统计与分析时均纳入考虑.
-            
-            第三个被测系统是工业界合作团队提供的电子支付服务(后文简称\textbf{E-payment}). 本实验测试它的实时贷记API接口. 此API仅用于系统内部使用, 是微服务之间的通信接口, 因此使用LAN上的定制协议交互. 作为电子支付接口, 此服务拥有很高的可用率与很低的容错率要求. 同时, 它有多达20个参数. 由于模拟环境的缺失, 在本实验中, 暂未进行实际的调用与发送, 而是根据接口描述文档进行测试用例和请求数据的生成, 来验证生成的测试用例可以有效覆盖参数组合, 从而验证其在这类服务的测试上的可用性.
-            
-            对于E-payment服务, 实验中生成了巨量(超过两百万个)的测试用例, 并计算了这些测试用例对于参数组合的覆盖率. 这种方式不仅仅评估了测试用例的覆盖率, 也检验了工具原型的鲁棒性和性能. 使用的场景主要进行基于数据分区的请求参数生成和参数合成操作, 详见附录图\ref{fig:epayment_scenario}.
+            \subsubsection*{电子支付服务实时贷记API接口(E-payment)}
+                \label{sec:epayment_setup}
+                第三个被测系统是工业界合作团队提供的电子支付服务(后文简称\textbf{E-payment}). 本实验测试它的实时贷记API接口. 此API仅用于系统内部使用, 是微服务之间的通信接口, 因此使用LAN上的定制协议交互. 作为电子支付接口, 此服务拥有很高的可用率与很低的容错率要求. 同时, 它有多达20个参数. 由于模拟环境的缺失, 在本实验中, 暂未进行实际的调用与发送, 而是根据接口描述文档进行测试用例和请求数据的生成, 来验证生成的测试用例可以有效覆盖参数组合, 从而验证其在这类服务的测试上的可用性.
+                
+                E-payment服务(电子支付服务实时贷记API)的测试场景为链式, 该链式场景专用于分区测试数据的合成. 除了最后一个状态的其余状态均依次进行各个参数的生成, 为了引入数据分区, 各个参数的生成使用自定义生成函数, 自定义生成函数依照各个参数的数据分区随机生成参数. 最后一个状态对之前各个状态生成的参数进行合成, 即把各个参数合成为一个对象类型, 其各成员为之前生成的各参数, 此处引入数据依赖, 以从上下文中获取之前生成的参数. 最后一个状态与被测API关联, 发送合成对象作为请求数据. 示意图见\ref{fig:epayment_scenario}.
+        
+                \begin{figure}[!htb]
+                    \centering
+                    \includegraphics[width=400pt]{scenario_E-payment_pattern_new.pdf}
+                    \caption[E-payment的场景模型示意图]{E-payment的场景模型示意图. 该场景被设计为链式, 专用于分区测试数据的合成.}
+                    \label{fig:epayment_scenario}
+                \end{figure}
+
+                利用此场景模型, 花费数小时生成了巨量(超过两百万个)的测试用例, 并计算了这些测试用例对于参数分区的全组合的覆盖率. 这种方式不仅仅评估了测试用例的覆盖率, 也检验了工具原型的鲁棒性和性能.
+
+            \subsubsection*{实验配置小结}
+                三个被测系统分别独立设计场景模型并进行实验. 使用它们的出发点与实验的侧重点也各有不同. 在表\ref{tab:sut_summary}中, 对各被测系统进行了简单对比与小结.
+
+                \begin{table}[!htb]
+                    \centering
+                    \begin{tabular}{ccccc}
+                        \toprule
+                            被测系统名称 & 简称 & 设计场景数 & 被测API数 & 使用目的 \\
+                        \midrule
+                            & \multirow{4}{*}{OSS} & \multirow{4}{*}{3} & \multirow{4}{*}{33} & 测试用例多样性分析 \\
+                            云对象存储服务 & & & & 覆盖率分析\\
+                            原型系统 & & & & 故障检测能力分析\\
+                            & & & & 测试用例多样性分析\\
+                            \hline
+                            某商业云 & \multirow{2}{*}{ECS} & \multirow{2}{*}{1} & \multirow{2}{*}{8} & 测试用例多样性分析 \\
+                            服务器服务 & & & & 故障检测能力分析 \\
+                            \hline
+                            电子支付服务 & \multirow{2}{*}{E-payment} & \multirow{2}{*}{1} & \multirow{2}{*}{1} & \multirow{2}{*}{覆盖率分析} \\
+                            实时贷记接口 & & & & \\
+                        \bottomrule
+                    \end{tabular}
+                    \caption[被测系统总结表]{实验使用的三个被测系统的简单对比与小结.}
+                    \label{tab:sut_summary}
+                \end{table}
+
             
         \subsection{测试用例多样性}
             富有多样性的测试用例是本文测试方法追求的目标之一. 多样性保证了测试用例集构成的测试套件具有较高的覆盖率和较低的冗余度. 另一方面, 使用被测系统的用户形形色色, 实际的系统负载也十分富有多样性, 因此, 富有多样性的测试用例, 除了在测试质量高外, 在某种程度上也能说明生成它们的测试场景模型可以很好地表达使用场景.
             
-            在web API的测试中, 由于测试用例指包含数据的API调用序列, 一种典型的多样性衡量指标便是调用序列的多样性. 如果测试用例的调用序列富有多样性, 那么测试用例也就富有多样性. 调用序列的多样性可以通过一系列测试用例中总API调用次数以及各典型API的调用次数的分布间接反映出来.
+            在web API的测试中, 由于测试用例指包含数据的API调用序列, 一种典型的多样性衡量指标便是调用序列的多样性. 如果测试用例的调用序列富有多样性, 那么测试用例也就富有多样性. 调用序列的多样性可以通过一系列测试用例中总API调用次数以及某一主要被测API的调用次数的\textbf{分布}反映出来.
+
+            形式化地, 对某个测试用例, 设其调用/请求序列为$seq$, 则API总调用次数即为序列的长度$|seq|$, 某主要被测API $a$的调用次数为
+            \begin{equation}
+                |\left\{i | i \in seq, i._{API} = x \right\}|.
+            \end{equation}
+            这里考察的, 也就是对于生成的一系列测试用例, 这两类值的分布.
             
             \begin{figure}[!htb]
                 \begin{minipage}{0.5\textwidth}
@@ -301,24 +378,24 @@
                     \includegraphics[width=200pt]{OSS_B_AclChange_cn.pdf}
                     \includegraphics[width=200pt]{OSS_C_Putsymlink_cn.pdf}
                 \end{minipage}
-                \caption{OSS测试用例操作次数分布直方图. 基于Scenario A, Scenario B, Scenario C三个场景生成的1,000个测试用例. 左侧为每个测试用例调用API总次数分布直方图, 右侧为对每个场景选取一种典型API, 其调用次数的分布直方图.}
+                \caption[OSS测试用例API调用次数分布直方图]{OSS测试用例操作次数分布直方图. 基于Scenario A, Scenario B, Scenario C三个场景生成的1,000个测试用例. 左侧为每个测试用例调用API总次数分布直方图, 右侧为对每个场景选取一种典型被测API, 其调用次数的分布直方图.}
                 \label{fig:OSS_stat}
             \end{figure}
             
             \begin{figure}[!htb]
                 \centering
                 \includegraphics[width=400pt]{EC_instance_distribution_cn.pdf}
-                \caption{ECS测试用例实例创建数分布直方图. 基于ECS测试场景生成的100个测试用例.}
+                \caption[ECS测试用例实例创建数分布直方图]{ECS测试用例实例创建数分布直方图, 也即创建实例API的调用次数分布图. 基于ECS测试场景生成的100个测试用例.}
                 \label{fig:ECS_stat}
             \end{figure}
             
-            图\ref{fig:OSS_stat}反映了对于OSS服务, 生成的测试用例的总API调用次数和典型API调用次数的统计分布直方图. 图\ref{fig:ECS_stat}反映了对于ECS服务, 生成的测试用例的创建的实例数(或创建实例API调用次数)的统计分布直方图. 虽然由于不同API在场景中所处位置不同的原因, 每幅直方图中的分布区间差异较大, 但是整体分布模式是类似的, 即无论是API总调用数目, 单API调用数目, 还是实例创建数目, 分布均较发散. 这反映了生成的测试用例的多样性.
+            图\ref{fig:OSS_stat}反映了对于OSS服务, 生成的测试用例的总API调用次数和主要被测API调用次数的统计分布直方图. 图\ref{fig:ECS_stat}反映了对于ECS服务, 生成的测试用例的创建实例数(即创建实例API调用次数)的统计分布直方图. 在这些直方图中, 横坐标为总API或某单个API的调用次数, 纵坐标为对应这个调用次数的测试用例数目. 虽然由于不同API在场景中所处位置不同的原因, 每幅直方图中的分布区间差异较大, 但是整体分布模式是类似的, 即无论是API总调用数目, 单API调用数目, 还是实例创建数目, 分布均较发散. 这反映了生成的测试用例的多样性.
             
             使用变异系数(CV, Coefficient of Variation)可以对这些分布进行定量度量, 变异系数定义为
             \begin{equation}
                 CV = \dfrac{\sigma}{\mu} = \dfrac{\sqrt{\dfrac{\sum (x - \overline{x})^2}{n}}}{\overline{x}}.
             \end{equation}
-            变异系数可以很好地忽略分布区间与数值尺度的影响, 纯粹度量数据的离散程度, 度量值越大说明离散程度越大. 以上各直方图的变异系数值见表\ref{tab:cv_stat}.
+            变异系数可以很好地忽略分布区间与数值尺度的影响, 纯粹度量数据的离散程度, 度量值越大说明离散程度越大. 以上各直方图使用变异系数度量的离散程度值见表\ref{tab:cv_stat}.
             
             \begin{table}[!htb]
                 \centering
@@ -333,11 +410,11 @@
                     ECS & / & 0.721 \\
                     \bottomrule
                 \end{tabular}
-                \caption{图\ref{fig:OSS_stat}与\ref{fig:ECS_stat}所示直方图的变异系数统计. 其中左列为API总调用次数分布的变异系数, 右列为典型API调用次数分布的变异系数, 分别对应OSS Scenario A的上传对象数, Scenario B的Acl权限变更次数, Scenario C的新建符号链接数以及ECS的创建实例数.}
+                \caption[直方图离散程度统计表]{图\ref{fig:OSS_stat}与\ref{fig:ECS_stat}所示直方图的离散程度统计表. 离散程度用变异系数度量, 值越大说明分布越离散. 其中左列为API总调用次数分布的变异系数, 右列为典型API调用次数分布的变异系数, 分别对应OSS Scenario A的上传对象数, Scenario B的Acl权限变更次数, Scenario C的新建符号链接数以及ECS的创建实例数.}
                 \label{tab:cv_stat}
             \end{table}
             
-            从表中可以看出, 测试用例的多样性通过API调用次数的离散程度很好地体现了出来, 且此度量值确实可以有效忽略尺度差异, 适合作为web API测试用例多样性的指标. 另外, 从表中还可以发现, 典型API的调用次数分布(右列)的离散程度更佳, 这是因为相比总调用次数(左列), 典型API的调用次数统计还去除了必须的固定调用的影响. 另外, 对于固定执行序列或普通非概率性的测试脚本, 由于生成的API调用序列高度相似, 其变异系数会几乎趋于零.
+            从表中可以看出, 测试用例的多样性通过API调用次数的离散程度很好地体现了出来, 且此度量值确实可以有效忽略尺度差异, 适合作为web API测试用例多样性的指标. 另外, 从表中还可以发现, 典型API的调用次数分布(右列)的离散程度更佳, 这是因为相比总调用次数(左列), 典型API的调用次数统计还去除了必须的固定调用的影响. 另外, 对于固定执行序列或普通非概率性的测试脚本, 由于生成的API调用序列高度相似, 其离散程度(即变异系数)值会几乎趋于零.
             
             测试用例的多样性主要归因于场景模型的概率性质, 在确定初始状态, 选择转移边, 以及确定是否终止等决策上, 场景模型均允许具有概率性质. 因此使用它生成的测试用例可以很容易地引入多样性的特征. 这是固定执行序列或普通非概率性测试脚本生成的测试用例所不具备的优势.
             
@@ -360,21 +437,46 @@
                 
                 组合测试策略\cite{grindal2005combination}是一种根据组合策略, 对测试的不同输入参数进行组合, 来生成测试用例的方法.
                 
-                在E-payment服务中, 实时贷记业务的API接口具有多达20个参数. 每个参数的可能取值, 包括合法取值与非法取值, 可以被划分为一些互不相交的集合, 即数据分区. 本文对E-payment服务测试时, 共考虑了其中13个参数的数据组合, 把每个参数的取值集合划分为2-5个分区,  它们的全组合共有1,152,000种. 评估指标为数据分区组合覆盖率, 即生成的测试用例覆盖的数据分区组合占总组合个数的百分比. 此覆盖率越高, 数据分区的组合被覆盖得越全, 测试效果越好. 
+                在E-payment服务中, 实时贷记业务的API接口具有多达20个参数. 每个参数的可能取值, 包括合法取值与非法取值, 可以被划分为一些互不相交的集合, 即数据分区. 本文对E-payment服务测试时, 共考虑了其中13个参数的数据\textbf{全组合}, 把每个参数的取值集合划分为2-5个分区,  它们的全组合共有1,152,000种. 评估指标为数据分区组合覆盖率, 即生成的测试用例覆盖的数据分区全组合占总全组合个数的百分比. 此覆盖率越高, 数据分区的全组合被覆盖得越全, 测试效果越好. 
                 
-                本文提出了一种进行组合测试的场景模型模式, 详见附录\ref{sec:epayment_scenario_model}. 在此模式中, 每个非最末状态进行基于数据分区的单参数生成, 最末状态组合之前的单参数, 对被测系统发送请求. 使用此模式, 便可在本文的场景模型上运用组合测试策略.
+                本文提出了一种进行组合测试的场景模型设计模式, 详见实验配置小节(第\ref{sec:epayment_setup}节). 此模式可以十分方便地将组合测试策略引入本文的自动化方法, 只需要对各个参数编写分区数据生成函数即可. 并且, 使用此模式, 算法的效率可以达到$\Theta(nm)$, 其中$m$为生成测试用例的数目, $n$为被测API的请求参数的数目, 也即场景的状态数目.\footnote{严格计算, 场景的状态数目为$n+1 = \Theta(n)$.}
                 
                 \begin{figure}[!htb]
                     \centering
                     \includegraphics[width=200pt]{webank1_cn.pdf}
                     \includegraphics[width=200pt]{webank2_cn.pdf}
-                    \caption{测试分区数 - 生成用例数关系图. 图中, 实线表示实验结果; 青色虚线为$y=x$, 表示最理想情况, 即每个测试用例覆盖一个新数据分区; 黑色虚线表示数据分区总数(1,152,000). 两幅子图系同一实验, 仅绘图尺度不同.}
+                    \caption[覆盖分区全组合数 - 生成用例数关系图]{覆盖分区全组合数 - 生成用例数关系图. 图中, 实线表示实验结果; 青色虚线为$y=x$, 表示最理想情况, 即每个测试用例覆盖一个新的数据分区全组合; 黑色虚线表示数据分区的全组合总数(1,152,000). 两幅子图系同一实验, 仅绘图尺度不同.}
                     \label{fig:partition}
                 \end{figure}
                 
-                实验共生成了逾200万个测试用例, 图\ref{fig:partition}反映了生成的测试用例数目与它们覆盖的分区组合数目之间的关系. 在图中, 青色虚线表示最理想的测试用例生成方法, 即每个新生成的测试用例均覆盖一个新的数据分区; 黑色虚线表示数据分区的总数(1,152,000); 蓝色实线表示在本文的场景模型上运行组合测试策略的实验结果. 两幅子图采用了不同尺度, 左图反映测试用例数目不超过数据分区数目时的趋势, 右图则反映测试用例数目不超过数据分区数目\textbf{两倍}时的趋势.
+                实验共生成了逾200万个测试用例, 图\ref{fig:partition}反映了生成的测试用例数目与它们覆盖的分区全组合数目之间的关系. 在图中, 青色虚线表示最理想的测试用例生成方法, 即每个新生成的测试用例均覆盖一个新的数据分区全组合; 黑色虚线表示数据分区的全组合总数(1,152,000); 蓝色实线表示在本文的场景模型上运行组合测试策略的实验结果. 两幅子图为同一实验, 但绘图尺度不同, 左图反映测试用例数目不超过数据分区全组合总数目时的趋势, 右图则反映测试用例数目不超过数据分区全组合总数目\textbf{两倍}时的趋势.
                 
-                当生成的测试用例数为总数据分区组合数(1,152,000)时, 覆盖的数据分区组合数为728,239, 数据分区组合覆盖率为63.2\%. 当测试用例数为总数据分区组合数的两倍时, 覆盖数增加至996,642, 对应覆盖率为86.5\%. 此结果说明, 使用本文的场景模型实现组合测试策略时, 如果生成测试用例数与总数据分区组合数为同一数量级, 测试用例便可以覆盖大部分数据组合分区, 因此是十分有效的. 理论推导亦可验证此结论(详见附录\ref{sec:partition_deduction}).
+                当生成的测试用例数等于总数据分区全组合数(1,152,000)时, 覆盖的全组合数为728,239, 数据分区组合覆盖率为63.2\%. 当测试用例数为总数据分区全组合数的两倍时, 覆盖数增加至996,642, 对应覆盖率为86.5\%. 此结果说明, 使用本文的场景模型实现组合测试策略时, 如果生成测试用例数与总数据分区全组合数为同一数量级, 测试用例便可以覆盖大部分数据分区全组合, 因此是十分有效的.
+
+                \vspace{1em}
+
+                实际上, 在此场景模式上运行组合测试策略生成测试用例, 可以等价于在所有数据分区全组合构成的集合上进行放回的完全随机抽样. 使用$n$表示此集合的元素个数($n = |S|$), 使用$E(m)$表示经过$m$次抽样后, 抽到的不同元素数目的期望.
+    
+                则$E(m)$满足
+                \begin{equation*}
+                    \left\{
+                    \begin{array}{l}
+                         E(0) = 0; \\
+                         E(m) = E(m-1) + \dfrac{n - E(m-1)}{n}, m > 0.
+                    \end{array}
+                    \right.
+                \end{equation*}
+                则有
+                \begin{equation*}
+                    \begin{aligned}
+                        E(m) & =\left(\dfrac{n-1}{n}\right)^{0} + \cdots + \left(\dfrac{n-1}{n}\right)^{m-1} \\
+                        & = n\left(1-(\dfrac{n-1}{n})^{m}\right).
+                    \end{aligned}
+                \end{equation*}
+                
+                令$k = \dfrac{m}{n}$, 则有$\dfrac{E(m)}{n} = 1 - \left(\dfrac{n-1}{n}\right)^{n\cdot k}$. 由于$\lim_{n\to\infty} \left(\dfrac{n-1}{n}\right)^n = \lim_{n\to\infty} \dfrac{1}{\left(1+\dfrac{1}{n-1}\right)^n} = \dfrac{1}{e}$, 可得$\lim_{n\to\infty}\dfrac{E(m)}{n} = 1 - \dfrac{1}{e^{k}} = 1 - \dfrac{1}{e^\frac{m}{n}}$.
+                
+                当$m=n$时, $E(m) = 1 - 1 / e = 63.2\%$. 当$m=2n$, $\lim_{n\to\infty} E(m) = 1 - 1 / e^2 = 86.5\%$. 均与实验结果相符.
     
         \subsection{故障检测能力}
         
@@ -395,7 +497,7 @@
                     致命错误, 系统崩溃 & 25\% \\
                     \bottomrule
                 \end{tabular}
-                \caption{OSS系统中被检测出的故障的分类. 此表说明, 各种类型的故障均可以被本文的测试方法自动有效检出.}
+                \caption[OSS系统中被检测出的故障的分类表]{OSS系统中被检测出的故障的分类. 此表说明, 各种类型的故障均可以被本文的测试方法自动有效检出.}
                 \label{tab:oss_bug_classification}
             \end{table}
             
@@ -418,7 +520,7 @@
             \begin{figure}[!htb]
                 \centering
                 \includegraphics[width=400pt]{small_curve.pdf}
-                \caption{故障的发现概率$P_{fail}$与故障的发生概率$P_{bug}$的关系. 用蓝色实线表示. 青色虚线为单位线, 亦表示单API测试时此故障的发现概率.}
+                \caption[故障的发现概率$P_{fail}$与发生概率$P_{bug}$的关系]{故障的发现概率$P_{fail}$与故障的发生概率$P_{bug}$的关系. 用蓝色实线表示. 青色虚线为单位线, 亦表示单API测试时此故障的发现概率.}
                 \label{fig:pbug_pfail_graph}
             \end{figure}
             曲线表明, 使用此场景模型和测试生成方法, 即便仅生成一个测试用例, 故障的发现概率都要远远高于故障的发生概率. 说明使用此自动化测试方法具有较强的故障检测能力. 其原因为, 自动化生成的测试用例是复杂多样的API请求序列, 覆盖率和多样性方面较之简单测试方法有明显优势, 发现故障的可能性也就更大.
@@ -444,7 +546,7 @@
                     Scenario C & 15.3 KB & 7.65 h & 8 & 24 KB & 12 h & 36.25\% \\
                     \bottomrule
                 \end{tabular}
-                \caption{OSS服务三个综合测试场景的设计耗时估计以及与传统人工方法设计耗时估计的对比.}
+                \caption[OSS服务中场景设计估计耗时与人工脚本设计估计耗时对比表]{OSS服务三个综合测试场景的估计设计耗时以及与传统人工方法估计设计耗时的对比.}
                 \label{tab:efficiency_esti}
             \end{table}
             
